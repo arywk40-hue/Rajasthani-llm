@@ -135,6 +135,13 @@ class MTTrainer:
             train_data, tokenizer=tokenizer, processor=processor,
         )
 
+        if len(train_dataset) == 0:
+            raise ValueError(
+                f"MT training dataset {train_data} is empty. "
+                "Please verify that the dataset ingestion/fetching ran successfully and "
+                "produced non-empty training files before starting training."
+            )
+
         eval_dataset = None
         if eval_data and Path(eval_data).exists():
             eval_dataset = MTDataset(
@@ -252,10 +259,19 @@ class MTTrainer:
             logger.error("Model not loaded. Aborting manual training.")
             return Path(output_dir)
 
-        from src.mt.dataset import create_mt_dataloader
+        from src.mt.dataset import create_mt_dataloader, MTDataset
 
         hf_model = self.model._hf_model
         tokenizer = self.model._tokenizer
+
+        # Ensure training data is not empty
+        train_ds = MTDataset(dialect_data, tokenizer=tokenizer, processor=self.model._processor)
+        if len(train_ds) == 0:
+            raise ValueError(
+                f"MT manual training dialect dataset {dialect_data} is empty. "
+                "Please verify that the dataset ingestion/fetching ran successfully and "
+                "produced non-empty training files before starting training."
+            )
 
         # Create dataloader with experience replay
         dataloader = create_mt_dataloader(

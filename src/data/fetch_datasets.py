@@ -120,6 +120,7 @@ class DatasetFetcher:
         """
         try:
             from datasets import load_dataset
+            import datasets
         except ImportError:
             logger.error("Install `datasets`: pip install datasets")
             raise
@@ -141,88 +142,81 @@ class DatasetFetcher:
         dialect_counts: dict[str, int] = {d: 0 for d in dialects}
         total = 0
 
+        # Define geocentric configurations for Rajasthan districts
+        dialect_to_configs = {
+            "marwari": ["Rajasthan_Barmer", "Rajasthan_Bikaner", "Rajasthan_Churu", "Rajasthan_Jaisalmer", "Rajasthan_Nagaur"],
+            "dhundhari": ["Rajasthan_Jaipur"]
+        }
+
+        configs_to_load = []
+        for dialect in dialects:
+            if dialect in dialect_to_configs:
+                configs_to_load.extend(dialect_to_configs[dialect])
+
         try:
-            # Stream the dataset to avoid downloading everything
-            dataset = load_dataset(
-                "ARTPARK-IISc/Vaani",
-                split=split,
-                streaming=True,
-            )
-
             with open(output_path, "w", encoding="utf-8") as f:
-                for sample in dataset:
-                    # Extract district/language from metadata
-                    district = str(sample.get("district", "")).lower().strip()
-                    language = str(sample.get("language", "")).lower().strip()
-
-                    # Check if this is a Rajasthan district
-                    dialect = None
-                    if district in target_districts:
-                        dialect = target_districts[district]
-                    elif language in dialects:
-                        dialect = language
-                    elif "rajasthani" in language or "marwari" in language:
-                        dialect = "marwari"  # Default mapping
-
-                    if dialect is None:
+                for config_name in configs_to_load:
+                    logger.info(f"Streaming VAANI configuration: {config_name}")
+                    try:
+                        dataset = load_dataset(
+                            "ARTPARK-IISc/Vaani",
+                            config_name,
+                            split=split,
+                            streaming=True,
+                            trust_remote_code=True,
+                        )
+                        # Avoid audio decoding during metadata fetch
+                        dataset = dataset.cast_column("audio", datasets.Audio(decode=False))
+                    except Exception as e:
+                        logger.error(f"Failed to load VAANI configuration {config_name}: {e}")
                         continue
 
-                    # Check per-dialect cap
-                    if dialect_counts.get(dialect, 0) >= max_samples_per_dialect:
-                        # Check if all dialects are capped
-                        if all(
-                            dialect_counts.get(d, 0) >= max_samples_per_dialect
-                            for d in dialects
-                        ):
-                            break
-                        continue
+                    for sample in dataset:
+                        district = str(sample.get("district", sample.get("districtName", ""))).lower().strip()
+                        language = str(sample.get("language", "")).lower().strip()
 
-                    # Extract audio and text
-                    text = str(sample.get("text", sample.get("sentence", ""))).strip()
-                    audio = sample.get("audio", {})
+                        dialect = None
+                        if district in target_districts:
+                            dialect = target_districts[district]
+                        elif language in dialects:
+                            dialect = language
+                        elif "rajasthani" in language or "marwari" in language:
+                            dialect = "marwari"
 
-                    if not text:
-                        continue
+                        if dialect is None:
+                            continue
 
-                    record = {
-                        "text": text,
-                        "dialect": dialect,
-                        "district": district,
-                        "language": language,
-                        "source": "vaani",
-                        "sample_rate": audio.get("sampling_rate", 16000) if isinstance(audio, dict) else 16000,
-                    }
+                        if dialect_counts.get(dialect, 0) >= max_samples_per_dialect:
+                            continue
 
-                    # Save audio path info (the actual audio array is in audio["array"])
-                    if isinstance(audio, dict) and "path" in audio:
-                        record["audio_path"] = audio["path"]
+                        # Extract audio and transcript (correct key is transcript!)
+                        text = str(sample.get("transcript", sample.get("text", sample.get("sentence", "")))).strip()
+                        audio = sample.get("audio", {})
 
-                    f.write(json.dumps(record, ensure_ascii=False) + "\n")
-                    dialect_counts[dialect] = dialect_counts.get(dialect, 0) + 1
-                    total += 1
+                        if not text or text == "None":
+                            continue
 
-                    if total % 500 == 0:
-                        logger.info(f"  Fetched {total} samples so far: {dialect_counts}")
+                        record = {
+                            "text": text,
+                            "dialect": dialect,
+                            "district": district,
+                            "language": language,
+                            "source": "vaani",
+                            "sample_rate": audio.get("sampling_rate", 16000) if isinstance(audio, dict) else 16000,
+                        }
+
+                        if isinstance(audio, dict) and "path" in audio:
+                            record["audio_path"] = audio["path"]
+
+                        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+                        dialect_counts[dialect] = dialect_counts.get(dialect, 0) + 1
+                        total += 1
+
+                        if total % 500 == 0:
+                            logger.info(f"  Fetched {total} samples so far: {dialect_counts}")
 
         except Exception as e:
             logger.error(f"Error fetching VAANI: {e}")
-            logger.info("Attempting fallback with specific config...")
-            # Some HF datasets need a specific config name
-            try:
-                dataset = load_dataset(
-                    "ARTPARK-IISc/Vaani",
-                    "default",
-                    split=split,
-                    streaming=True,
-                    trust_remote_code=True,
-                )
-                logger.info("Fallback succeeded — re-run fetch_vaani()")
-            except Exception as e2:
-                logger.error(f"Fallback also failed: {e2}")
-                logger.warning(
-                    "VAANI may require authentication or specific config. "
-                    "Try: huggingface-cli login"
-                )
 
         logger.success(
             f"VAANI fetch complete: {total} total samples | "
@@ -245,6 +239,7 @@ class DatasetFetcher:
         """
         try:
             from datasets import load_dataset
+            import datasets
         except ImportError:
             logger.error("Install `datasets`: pip install datasets")
             raise
@@ -261,6 +256,8 @@ class DatasetFetcher:
                 split=split,
                 streaming=True,
             )
+            # Avoid decoding audio data to prevent torchcodec dependency during fetch
+            dataset = dataset.cast_column("audio", datasets.Audio(decode=False))
 
             with open(output_path, "w", encoding="utf-8") as f:
                 for sample in dataset:
@@ -334,63 +331,81 @@ class DatasetFetcher:
         dialect_counts: dict[str, int] = {d: 0 for d in dialects}
         total = 0
 
+        # Define geocentric configurations for Rajasthan districts
+        dialect_to_configs = {
+            "marwari": ["Rajasthan_Barmer", "Rajasthan_Bikaner", "Rajasthan_Churu", "Rajasthan_Jaisalmer", "Rajasthan_Nagaur"],
+            "dhundhari": ["Rajasthan_Jaipur"]
+        }
+
+        configs_to_load = []
+        for dialect in dialects:
+            if dialect in dialect_to_configs:
+                configs_to_load.extend(dialect_to_configs[dialect])
+
         try:
-            dataset = load_dataset(
-                "ARTPARK-IISc/Vaani",
-                split="train",
-                streaming=True,
-            )
-
             with open(metadata_path, "w", encoding="utf-8") as f:
-                for sample in dataset:
-                    district = str(sample.get("district", "")).lower().strip()
-                    language = str(sample.get("language", "")).lower().strip()
-
-                    dialect = target_districts.get(district)
-                    if dialect is None:
-                        if language in dialects:
-                            dialect = language
-                        else:
-                            continue
-
-                    if dialect_counts.get(dialect, 0) >= max_samples_per_dialect:
-                        if all(c >= max_samples_per_dialect for c in dialect_counts.values()):
-                            break
+                for config_name in configs_to_load:
+                    logger.info(f"Streaming VAANI with audio configuration: {config_name}")
+                    try:
+                        dataset = load_dataset(
+                            "ARTPARK-IISc/Vaani",
+                            config_name,
+                            split="train",
+                            streaming=True,
+                            trust_remote_code=True,
+                        )
+                    except Exception as e:
+                        logger.error(f"Failed to load VAANI configuration {config_name}: {e}")
                         continue
 
-                    text = str(sample.get("text", sample.get("sentence", ""))).strip()
-                    audio = sample.get("audio", {})
+                    for sample in dataset:
+                        district = str(sample.get("district", sample.get("districtName", ""))).lower().strip()
+                        language = str(sample.get("language", "")).lower().strip()
 
-                    if not text or not isinstance(audio, dict):
-                        continue
+                        dialect = target_districts.get(district)
+                        if dialect is None:
+                            if language in dialects:
+                                dialect = language
+                            else:
+                                continue
 
-                    # Save audio file
-                    audio_array = audio.get("array")
-                    sr = audio.get("sampling_rate", 16000)
-                    if audio_array is not None:
-                        audio_filename = f"{dialect}_{total:06d}.wav"
-                        audio_path = audio_dir / audio_filename
-                        try:
-                            import numpy as np
-                            sf.write(str(audio_path), np.array(audio_array), sr)
-                        except Exception as e:
-                            logger.warning(f"Could not save audio {audio_filename}: {e}")
+                        if dialect_counts.get(dialect, 0) >= max_samples_per_dialect:
                             continue
 
-                        record = {
-                            "audio_path": str(audio_path),
-                            "text": text,
-                            "dialect": dialect,
-                            "district": district,
-                            "sample_rate": sr,
-                            "source": "vaani",
-                        }
-                        f.write(json.dumps(record, ensure_ascii=False) + "\n")
-                        dialect_counts[dialect] = dialect_counts.get(dialect, 0) + 1
-                        total += 1
+                        # Extract audio and transcript (correct key is transcript!)
+                        text = str(sample.get("transcript", sample.get("text", sample.get("sentence", "")))).strip()
+                        audio = sample.get("audio", {})
 
-                        if total % 100 == 0:
-                            logger.info(f"  Audio saved: {total} | {dialect_counts}")
+                        if not text or text == "None" or not isinstance(audio, dict):
+                            continue
+
+                        # Save audio file
+                        audio_array = audio.get("array")
+                        sr = audio.get("sampling_rate", 16000)
+                        if audio_array is not None:
+                            audio_filename = f"{dialect}_{total:06d}.wav"
+                            audio_path = audio_dir / audio_filename
+                            try:
+                                import numpy as np
+                                sf.write(str(audio_path), np.array(audio_array), sr)
+                            except Exception as e:
+                                logger.warning(f"Could not save audio {audio_filename}: {e}")
+                                continue
+
+                            record = {
+                                "audio_path": str(audio_path),
+                                "text": text,
+                                "dialect": dialect,
+                                "district": district,
+                                "sample_rate": sr,
+                                "source": "vaani",
+                            }
+                            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+                            dialect_counts[dialect] = dialect_counts.get(dialect, 0) + 1
+                            total += 1
+
+                            if total % 100 == 0:
+                                logger.info(f"  Audio saved: {total} | {dialect_counts}")
 
         except Exception as e:
             logger.error(f"Error fetching VAANI audio: {e}")
