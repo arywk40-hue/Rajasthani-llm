@@ -410,3 +410,29 @@ class MTTrainer:
     def save_checkpoint(self, path: str | Path) -> Path:
         """Save model weights."""
         return self.model.save_checkpoint(path)
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="IndicTrans2 MT Trainer")
+    parser.add_argument("--train_data", type=str, default="data/raw/karya/karya_rajasthan.jsonl")
+    parser.add_argument("--eval_data", type=str, default=None)
+    parser.add_argument("--output_dir", type=str, default="models/checkpoints/mt_gpu")
+    parser.add_argument("--epochs", type=int, default=5)
+    parser.add_argument("--batch_size", type=int, default=2)
+    parser.add_argument("--gradient_accumulation_steps", type=int, default=8)
+    parser.add_argument("--fp16", type=bool, default=True)
+    args = parser.parse_args()
+
+    model = IndicTrans2MT()
+    trainer = MTTrainer(model)
+    trainer.train_with_hf_trainer(
+        train_data=args.train_data,
+        eval_data=args.eval_data,
+        output_dir=args.output_dir,
+        num_epochs=args.epochs,
+        batch_size=args.batch_size,
+        gradient_accumulation_steps=args.gradient_accumulation_steps,
+        fp16=args.fp16,
+    )

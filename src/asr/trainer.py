@@ -297,3 +297,26 @@ class ASRTrainer:
             return {}
 
         return self.asr.benchmark_zero_shot(audio_paths, references)
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Whisper ASR Trainer")
+    parser.add_argument("--train_data", type=str, default="data/raw/karya/karya_rajasthan.jsonl")
+    parser.add_argument("--eval_data", type=str, default=None)
+    parser.add_argument("--output_dir", type=str, default="models/checkpoints/asr_whisper")
+    parser.add_argument("--epochs", type=int, default=5)
+    parser.add_argument("--batch_size", type=int, default=2)
+    parser.add_argument("--lr", type=float, default=1e-5)
+    args = parser.parse_args()
+
+    trainer = ASRTrainer()
+    trainer.train(
+        train_data=args.train_data,
+        eval_data=args.eval_data,
+        output_dir=args.output_dir,
+        num_epochs=args.epochs,
+        batch_size=args.batch_size,
+        learning_rate=args.lr,
+    )

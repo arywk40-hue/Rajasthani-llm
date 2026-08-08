@@ -30,7 +30,7 @@ async def lifespan(app: FastAPI):
     # Lazy imports to avoid heavy loading if models are not needed
     from src.asr.model import WhisperASR
     from src.mt.model import IndicTrans2MT
-    from src.tts.synthesize import IndicTTSSynthesizer
+    from src.tts.fastpitch import IndicTTS
     
     # In a real production deployment, you'd likely configure which models to load
     # based on environment variables to save memory (e.g., LOAD_ASR=true)
@@ -50,7 +50,7 @@ async def lifespan(app: FastAPI):
 
     try:
         logger.info("Initializing TTS Model...")
-        app.state.tts_model = IndicTTSSynthesizer()
+        app.state.tts_model = IndicTTS()
     except Exception as e:
         logger.warning(f"Could not load TTS model: {e}")
         app.state.tts_model = None
@@ -65,6 +65,9 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     """Factory function to create the FastAPI application."""
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.responses import FileResponse
+
     app = FastAPI(
         title="Rajasthani Dialect AI — Bhashini NHLT API",
         description=(
@@ -81,6 +84,15 @@ def create_app() -> FastAPI:
     # Route registration
     app.include_router(health_router, prefix="/api/v1", tags=["Health"])
     app.include_router(translate_router, prefix="/api/v1", tags=["Translation"])
+
+    # Serve static directory & UI
+    static_dir = Path("static")
+    if static_dir.exists():
+        app.mount("/static", StaticFiles(directory="static"), name="static")
+
+        @app.get("/", include_in_schema=False)
+        async def root():
+            return FileResponse("static/index.html")
 
     return app
 
