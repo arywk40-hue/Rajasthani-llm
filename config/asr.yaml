@@ -1,12 +1,18 @@
 asr:
-  architecture: "FastConformer"
-  decoder: "hybrid_tdt_ctc"
-  parameters: "430M"
-  
+  architecture: "Whisper"
+  decoder: "autoregressive"
+  base_model: "indicwhisper-hindi-large-v2"
+  hf_model_name: "indicwhisper-hindi-large-v2"
+   
   training:
-    epochs: 50
-    learning_rate: 1e-4
-    batch_size: 32
+    epochs: 10
+    learning_rate: 1e-5
+    batch_size: 8
+    gradient_accumulation_steps: 4
+    warmup_steps: 500
+    fp16: true
+    freeze_encoder: true
+    gradient_checkpointing: true
     augmentations:
       - spec_augment
       - speed_perturbation: [0.9, 1.0, 1.1]
@@ -15,3 +21,9 @@ asr:
   input:
     sample_rate: 16000
     features: "log_mel_spectrogram"
+
+  inference:
+    language: "hi"
+    task: "transcribe"
+    batch_size: 8
+    max_length: 448

@@ -14,3 +14,7 @@ librosa>=0.10.0
 soundfile>=0.12.1
 onnxruntime>=1.15.1
 ctranslate2>=3.17.1
+datasets>=2.14.0
+accelerate>=0.21.0
+IndicTransToolkit
+unbabel-comet>=2.2.0

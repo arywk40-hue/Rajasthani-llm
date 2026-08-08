@@ -1,19 +1,19 @@
 """
 TTS Trainer Module
 
-Handles the two-stage training loop (Acoustic model first, Vocoder second).
+Handles the two-stage training loop for custom TTS models (Acoustic first, Vocoder second).
+Note: This is for training from scratch. For fine-tuning AI4Bharat Indic-TTS,
+use the NeMo/HuggingFace training scripts directly.
 """
 
 import torch
 from loguru import logger
-from src.tts.fastpitch import FastPitchAcoustic
-from src.tts.hifigan import HiFiGANVocoder
 
 
 class TTSTrainer:
-    """Trainer for the TTS pipeline."""
+    """Trainer for custom TTS pipeline."""
     
-    def __init__(self, acoustic: FastPitchAcoustic, vocoder: HiFiGANVocoder, device: str = "cpu"):
+    def __init__(self, acoustic: torch.nn.Module, vocoder: torch.nn.Module, device: str = "cpu"):
         self.acoustic = acoustic
         self.vocoder = vocoder
         self.device = torch.device(device)
@@ -25,7 +25,7 @@ class TTSTrainer:
         logger.info(f"TTSTrainer initialized on {self.device}")
 
     def train_acoustic_epoch(self, dataloader):
-        """Train FastPitch."""
+        """Train acoustic model."""
         self.acoustic.train()
         total_loss = 0
         for batch in dataloader:
@@ -37,7 +37,7 @@ class TTSTrainer:
         return total_loss / max(1, len(dataloader))
 
     def train_vocoder_epoch(self, dataloader):
-        """Train HiFi-GAN."""
+        """Train vocoder."""
         self.vocoder.train()
         total_loss = 0
         for batch in dataloader:

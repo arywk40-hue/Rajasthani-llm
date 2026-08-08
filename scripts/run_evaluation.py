@@ -1,31 +1,37 @@
 """
 Run the evaluation harness against the LDC-IL GOLDEN test set (roadmap §6).
 
-The LDC-IL Rajasthani corpus (31,096 words / 5,332 sentences) is held strictly
-out of training to avoid leakage. This script:
+The LDC-IL Rajasthani corpus is held strictly out of training. This script:
     - loads the golden parallel corpus
-    - runs a translation model (or a mock) over the source side
+    - runs a translation model over the source side
     - computes chrF++ (and optionally CER/WER for ASR transcripts)
     - emits a JSONL scorecard + prints a human-readable summary
 
 Usage:
-    python scripts/run_evaluation.py --golden data/processed/ldcil_golden.jsonl
-    python scripts/run_evaluation.py --golden ... --mock-substitution   # no-model sanity run
+    # Evaluate MT
+    python scripts/run_evaluation.py --task mt --golden data/processed/ldcil_golden.jsonl --model-path checkpoints/mt_indictrans2/best
+
+    # Evaluate ASR
+    python scripts/run_evaluation.py --task asr --test-data data/processed/asr_val.jsonl --model-path checkpoints/asr_whisper/final
 """
 
 import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Callable
 
 from loguru import logger
+from tqdm import tqdm
 
-from src.evaluation.metrics import COMETWrapper, Evaluator
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from src.evaluation.metrics import Evaluator
+from src.mt.model import IndicTrans2MT
+from src.asr.model import WhisperASR
 
 
 def load_golden(path: str | Path) -> list[tuple[str, str]]:
-    """Load (source, reference) pairs from a JSONL golden corpus file."""
     path = Path(path)
     pairs: list[tuple[str, str]] = []
     with open(path, "r", encoding="utf-8") as f:
@@ -40,72 +46,97 @@ def load_golden(path: str | Path) -> list[tuple[str, str]]:
     return pairs
 
 
-def default_translator(text: str) -> str:
-    """Identity mock: substitutes for a live translation model in CI runs."""
-    return text
+def load_asr_data(path: str | Path) -> tuple[list[str], list[str]]:
+    path = Path(path)
+    audio_paths = []
+    references = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            record = json.loads(line)
+            ap = record.get("audio_path")
+            ref = record.get("text")
+            if ap and ref and Path(ap).exists():
+                audio_paths.append(ap)
+                references.append(ref)
+    return audio_paths, references
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Score the LDC-IL golden evaluation set")
-    parser.add_argument("--golden", type=str, default="data/processed/ldcil_golden.jsonl")
+    parser = argparse.ArgumentParser(description="Score models against evaluation sets")
+    parser.add_argument("--task", type=str, choices=["mt", "asr"], required=True)
+    parser.add_argument("--test-data", type=str, default=None, help="Input test data")
+    parser.add_argument("--golden", type=str, default=None, help="Golden parallel text (for MT)")
+    parser.add_argument("--model-path", type=str, default=None, help="Path to checkpoint (None=pretrained base)")
     parser.add_argument("--limit", type=int, default=None, help="Only score first N pairs")
-    parser.add_argument("--output", type=str, default="reports/mt_chrf.jsonl")
-    parser.add_argument(
-        "--mock-substitution",
-        action="store_true",
-        help="Use the identity mock translator instead of a real model (sanity check).",
-    )
-    parser.add_argument("--translator-module", type=str, default=None,
-                        help="Import path 'module:function' returning a text->text callable.")
+    parser.add_argument("--output", type=str, default="reports/evaluation_report.jsonl")
+    parser.add_argument("--batch-size", type=int, default=16)
+    
     args = parser.parse_args()
 
-    logger.info("Running Evaluation Pipeline")
-    pairs = load_golden(args.golden)
-    if args.limit:
-        pairs = pairs[: args.limit]
-    logger.info(f"Loaded {len(pairs)} golden pairs from {args.golden}")
-
-    # Resolve the translator callable
-    translator: Callable[[str], str]
-    if args.translator_module:
-        module_path, _, func_name = args.translator_module.partition(":")
-        import importlib
-
-        translator = getattr(importlib.import_module(module_path), func_name)
-        logger.info(f"Using translator from {args.translator_module}")
-    elif args.mock_substitution:
-        translator = default_translator
-        logger.info("Using MOCK substitution translator (identity) — sanity run only.")
-    else:
-        logger.error(
-            "No translator configured. Pass --translator-module 'pkg.module:func' "
-            "or --mock-substitution for a mock run."
-        )
-        sys.exit(1)
-
+    logger.info(f"Running Evaluation Pipeline | Task: {args.task.upper()}")
     evaluator = Evaluator()
-    hypotheses = [translator(src) for src, _ in pairs]
-    references = [ref for _, ref in pairs]
 
-    report = evaluator.evaluate_mt(hypotheses, references)
+    if args.task == "mt":
+        if not args.golden:
+            args.golden = "data/processed/ldcil_golden.jsonl"
+            
+        pairs = load_golden(args.golden)
+        if args.limit:
+            pairs = pairs[: args.limit]
+            
+        logger.info(f"Loaded {len(pairs)} golden pairs from {args.golden}")
+
+        # Load model
+        model = IndicTrans2MT()
+        if args.model_path:
+            model.load_checkpoint(args.model_path)
+            
+        sources = [src for src, _ in pairs]
+        references = [ref for _, ref in pairs]
+        hypotheses = []
+        
+        logger.info("Translating...")
+        for i in tqdm(range(0, len(sources), args.batch_size)):
+            batch = sources[i : i + args.batch_size]
+            batch_hyps = model.translate(batch, src_lang="hi", tgt_lang="hi") # Use hi as generic proxy
+            hypotheses.extend(batch_hyps)
+            
+        report = evaluator.evaluate_mt(hypotheses, references, meta=sources)
+        
+        print("\n=== MT Evaluation (chrF++) ===")
+        print(f"  Pairs evaluated : {report.samples}")
+        print(f"  Mean chrF++     : {report.mean_chrf:.4f}")
+
+    elif args.task == "asr":
+        if not args.test_data:
+            args.test_data = "data/processed/asr_val.jsonl"
+            
+        audio_paths, references = load_asr_data(args.test_data)
+        if args.limit:
+            audio_paths = audio_paths[: args.limit]
+            references = references[: args.limit]
+            
+        logger.info(f"Loaded {len(audio_paths)} audio files from {args.test_data}")
+
+        # Load model
+        model = WhisperASR()
+        if args.model_path:
+            model.load_checkpoint(args.model_path)
+            
+        logger.info("Transcribing...")
+        hypotheses = model.transcribe(audio_paths, language="hi", batch_size=args.batch_size)
+        
+        report = evaluator.evaluate_asr(hypotheses, references)
+        
+        print("\n=== ASR Evaluation ===")
+        print(f"  Samples evaluated : {report.samples}")
+        print(f"  Mean CER          : {report.mean_cer:.4f}")
+        print(f"  Mean WER          : {report.mean_wer:.4f}")
+
     if args.output:
         evaluator.save_report(report, args.output)
 
-    logger.info(report.summary())
-    print("\n=== MT Evaluation (chrF++) ===")
-    print(f"  Pairs evaluated : {report.samples}")
-    print(f"  Mean chrF++     : {report.mean_chrf:.4f}")
-    print()
-
-    # Optional COMET (only if the optional dependency is installed)
-    comet = evaluator.get_comet()
-    if comet.available:
-        logger.info("COMET available; scoring is left to a dedicated script.")
-    else:
-        logger.info("COMET not installed; using chrF++ as the primary MT metric (roadmap allows).")
-
-    if not args.limit and not args.output:
-        logger.warning("No output path specified; report not persisted.")
+    logger.info("Evaluation Complete")
 
 
 if __name__ == "__main__":

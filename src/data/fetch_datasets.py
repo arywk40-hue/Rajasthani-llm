@@ -147,7 +147,6 @@ class DatasetFetcher:
                 "ARTPARK-IISc/Vaani",
                 split=split,
                 streaming=True,
-                trust_remote_code=True,
             )
 
             with open(output_path, "w", encoding="utf-8") as f:
@@ -261,7 +260,6 @@ class DatasetFetcher:
                 "severo/speech-rj-hi",
                 split=split,
                 streaming=True,
-                trust_remote_code=True,
             )
 
             with open(output_path, "w", encoding="utf-8") as f:
@@ -341,7 +339,6 @@ class DatasetFetcher:
                 "ARTPARK-IISc/Vaani",
                 split="train",
                 streaming=True,
-                trust_remote_code=True,
             )
 
             with open(metadata_path, "w", encoding="utf-8") as f:

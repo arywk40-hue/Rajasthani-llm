@@ -5,9 +5,10 @@ Exposes the cascaded S2ST pipeline (ASR → MT → TTS) as REST endpoints,
 mirroring the Bhashini NHLT API contract.
 """
 
-from __future__ import annotations
+import base64
+import io
 
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException, Header, Request
 from pydantic import BaseModel, Field
 from typing import Optional
 from loguru import logger
@@ -74,70 +75,104 @@ async def verify_api_key(x_api_key: str = Header(..., alias="X-API-Key")):
 
 @router.post("/translate", response_model=TranslateResponse)
 async def translate_text(
-    request: TranslateRequest,
+    payload: TranslateRequest,
+    request: Request,
     api_key: str = Depends(verify_api_key),
 ):
     """
     Translate text between Rajasthani dialects and Hindi/English.
     Requires X-API-Key header for authentication.
     """
-    logger.info(f"Translation request: {request.src_lang} → {request.tgt_lang} ({len(request.text)} chars)")
+    logger.info(f"Translation request: {payload.src_lang} → {payload.tgt_lang} ({len(payload.text)} chars)")
 
-    # In production:
-    # 1. Normalize text via DevanagariNormalizer
-    # 2. Tokenize via SentencePiece
-    # 3. Run IndicTrans2MT.generate()
-    # 4. Detokenize
+    model = request.app.state.mt_model
+    if model is None:
+        raise HTTPException(status_code=503, detail="MT model not loaded")
 
-    translated = f"[Translated from {request.src_lang}] {request.text}"
+    try:
+        translations = model.translate(
+            [payload.text],
+            src_lang=payload.src_lang,
+            tgt_lang=payload.tgt_lang,
+        )
+        translated = translations[0] if translations else ""
+    except Exception as e:
+        logger.error(f"Translation failed: {e}")
+        raise HTTPException(status_code=500, detail="Translation generation failed")
 
     return TranslateResponse(
         translated_text=translated,
-        src_lang=request.src_lang,
-        tgt_lang=request.tgt_lang,
+        src_lang=payload.src_lang,
+        tgt_lang=payload.tgt_lang,
     )
 
 
 @router.post("/asr", response_model=ASRResponse)
 async def transcribe_audio(
-    request: ASRRequest,
+    payload: ASRRequest,
+    request: Request,
     api_key: str = Depends(verify_api_key),
 ):
     """
-    Transcribe audio to Devanagari text using FastConformer ASR.
+    Transcribe audio to Devanagari text using Whisper ASR.
     """
-    logger.info(f"ASR request: dialect={request.dialect}, audio_len={len(request.audio_base64)}")
+    logger.info(f"ASR request: dialect={payload.dialect}, audio_len={len(payload.audio_base64)}")
 
-    # In production:
-    # 1. Decode base64 audio
-    # 2. Resample to 16kHz
-    # 3. Run FastConformerASR inference
-    # 4. Normalize output text
+    model = request.app.state.asr_model
+    if model is None:
+        raise HTTPException(status_code=503, detail="ASR model not loaded")
+
+    try:
+        import soundfile as sf
+        audio_bytes = base64.b64decode(payload.audio_base64)
+        audio_data, sr = sf.read(io.BytesIO(audio_bytes))
+        
+        # Audio must be mono
+        if len(audio_data.shape) > 1:
+            audio_data = audio_data.mean(axis=1)
+
+        transcribed = model.transcribe_array(audio_data, sampling_rate=sr, language="hi")
+    except Exception as e:
+        logger.error(f"ASR failed: {e}")
+        raise HTTPException(status_code=500, detail="Audio transcription failed")
 
     return ASRResponse(
-        transcribed_text="Transcribed text placeholder",
-        dialect=request.dialect,
-        confidence=0.85,
+        transcribed_text=transcribed,
+        dialect=payload.dialect,
+        confidence=0.85, # Note: Whisper doesn't natively expose simple sequence confidence, proxying for demo
     )
 
 
 @router.post("/tts", response_model=TTSResponse)
 async def synthesize_speech(
-    request: TTSRequest,
+    payload: TTSRequest,
+    request: Request,
     api_key: str = Depends(verify_api_key),
 ):
     """
-    Synthesize speech from text using FastPitch + HiFi-GAN.
+    Synthesize speech from text using Indic-TTS FastPitch + HiFi-GAN.
     """
-    logger.info(f"TTS request: dialect={request.dialect}, text_len={len(request.text)}")
+    logger.info(f"TTS request: dialect={payload.dialect}, text_len={len(payload.text)}")
 
-    # In production:
-    # 1. Normalize text
-    # 2. Run FastPitch → mel-spectrogram
-    # 3. Run HiFi-GAN → waveform
-    # 4. Encode to base64
+    model = request.app.state.tts_model
+    if model is None:
+        raise HTTPException(status_code=503, detail="TTS model not loaded")
+
+    try:
+        import soundfile as sf
+        audio_array = model.synthesize(payload.text)
+        
+        # Convert to WAV and base64 encode
+        buffer = io.BytesIO()
+        sf.write(buffer, audio_array, model.sample_rate, format="WAV")
+        audio_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+    except Exception as e:
+        logger.error(f"TTS failed: {e}")
+        raise HTTPException(status_code=500, detail="Speech synthesis failed")
 
     return TTSResponse(
-        audio_base64="base64_audio_placeholder",
-        dialect=request.dialect,
+        audio_base64=audio_base64,
+        sample_rate=model.sample_rate,
+        dialect=payload.dialect,
     )
+

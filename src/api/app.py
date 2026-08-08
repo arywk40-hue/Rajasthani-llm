@@ -26,13 +26,42 @@ from src.api.middleware.dpdp import DPDPComplianceMiddleware
 async def lifespan(app: FastAPI):
     """Application lifespan: load models on startup, release on shutdown."""
     logger.info("Starting Rajasthani Dialect AI API Server")
-    # Model loading would happen here in production
-    # app.state.asr_model = load_asr(...)
-    # app.state.mt_model = load_mt(...)
-    # app.state.tts_model = load_tts(...)
-    yield
-    logger.info("Shutting down API Server")
+    
+    # Lazy imports to avoid heavy loading if models are not needed
+    from src.asr.model import WhisperASR
+    from src.mt.model import IndicTrans2MT
+    from src.tts.synthesize import IndicTTSSynthesizer
+    
+    # In a real production deployment, you'd likely configure which models to load
+    # based on environment variables to save memory (e.g., LOAD_ASR=true)
+    try:
+        logger.info("Initializing MT Model...")
+        app.state.mt_model = IndicTrans2MT()
+    except Exception as e:
+        logger.warning(f"Could not load MT model: {e}")
+        app.state.mt_model = None
 
+    try:
+        logger.info("Initializing ASR Model...")
+        app.state.asr_model = WhisperASR()
+    except Exception as e:
+        logger.warning(f"Could not load ASR model: {e}")
+        app.state.asr_model = None
+
+    try:
+        logger.info("Initializing TTS Model...")
+        app.state.tts_model = IndicTTSSynthesizer()
+    except Exception as e:
+        logger.warning(f"Could not load TTS model: {e}")
+        app.state.tts_model = None
+
+    yield
+    
+    logger.info("Shutting down API Server")
+    # Release resources
+    app.state.mt_model = None
+    app.state.asr_model = None
+    app.state.tts_model = None
 
 def create_app() -> FastAPI:
     """Factory function to create the FastAPI application."""

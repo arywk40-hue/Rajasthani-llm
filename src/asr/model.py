@@ -38,8 +38,8 @@ WHISPER_MODELS = {
     "whisper-small": "openai/whisper-small",
     "whisper-base": "openai/whisper-base",
     "whisper-tiny": "openai/whisper-tiny",
-    # Sarvam AI
-    "saaras-v1": "sarvamai/saaras-v1",
+    # Sarvam AI — NOTE: Saaras is API-only, not a public HF checkpoint
+    # "saaras-v1": "sarvamai/saaras-v1",  # unavailable on HF
 }
 
 
@@ -395,7 +395,7 @@ class WhisperASR:
         Returns:
             Dict with {mean_cer, mean_wer, per_sample: [...]}
         """
-        from src.evaluation.metrics import compute_cer, compute_wer
+        from ..evaluation.metrics import compute_cer, compute_wer
 
         transcripts = self.transcribe(audio_paths, language=language)
 
