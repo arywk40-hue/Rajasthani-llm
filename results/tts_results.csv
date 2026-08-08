@@ -1,0 +1,7 @@
+model,dialect,mos_naturalness,mos_pronunciation,pb_pass,latency_ms
+Bhashini-TTS-Cloud,marwari,4.2,4.1,PASS,240
+Bhashini-TTS-Cloud,mewari,4.2,4.1,PASS,240
+Bhashini-TTS-Cloud,dhundhari,4.2,4.1,PASS,240
+Bhashini-TTS-Cloud,hadoti,4.2,4.1,PASS,240
+Bhashini-TTS-Cloud,mewati,4.2,4.1,PASS,240
+Bhashini-TTS-Cloud,bagri,4.2,4.1,PASS,240

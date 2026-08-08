@@ -7,7 +7,6 @@ Provides implementations for the TTS architecture:
 """
 
 from src.tts.fastpitch import IndicTTS
-from src.tts.synthesize import IndicTTSSynthesizer
 from src.tts.trainer import TTSTrainer
 
-__all__ = ["IndicTTS", "IndicTTSSynthesizer", "TTSTrainer"]
+__all__ = ["IndicTTS", "TTSTrainer"]

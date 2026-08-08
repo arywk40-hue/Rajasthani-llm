@@ -401,6 +401,81 @@ class DatasetFetcher:
         )
         return metadata_path
 
+    # ─── BPCC Parallel Corpus (for MT) ──────────────────────────────────────────
+
+    def fetch_bpcc_sample(
+        self,
+        src: str = "hi",
+        tgt: str = "en",
+        max_pairs: int = 100000,
+    ) -> Path:
+        """
+        Fetch BPCC (Bharat Parallel Corpus Collection) parallel text for MT training.
+
+        BPCC is the training data for IndicTrans2 — 230M parallel sentence pairs
+        across 22 scheduled languages. We stream and sample the required language pair.
+
+        Args:
+            src: Source language code (e.g., "hi" for Hindi)
+            tgt: Target language code (e.g., "en" for English)
+            max_pairs: Maximum number of sentence pairs to download
+
+        Returns:
+            Path to JSONL file with {"source_text": ..., "target_text": ..., "source_lang": ..., "target_lang": ...}
+        """
+        try:
+            from datasets import load_dataset
+        except ImportError:
+            logger.error("Install `datasets`: pip install datasets")
+            raise
+
+        output_dir = self.output_dir / "bpcc"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_path = output_dir / f"bpcc_{src}_{tgt}.jsonl"
+
+        logger.info(f"Fetching BPCC {src}-{tgt} | Max pairs: {max_pairs}")
+
+        count = 0
+        try:
+            # BPCC is available as separate configs per language pair
+            config_name = f"{src}-{tgt}"
+            dataset = load_dataset(
+                "ai4bharat/BPCC",
+                config_name,
+                split="train",
+                streaming=True,
+            )
+
+            with open(output_path, "w", encoding="utf-8") as f:
+                for sample in dataset:
+                    src_text = str(sample.get("source", sample.get(src, ""))).strip()
+                    tgt_text = str(sample.get("target", sample.get(tgt, ""))).strip()
+
+                    if not src_text or not tgt_text:
+                        continue
+
+                    record = {
+                        "source_text": src_text,
+                        "target_text": tgt_text,
+                        "source_lang": src,
+                        "target_lang": tgt,
+                        "source_dataset": "bpcc",
+                    }
+                    f.write(json.dumps(record, ensure_ascii=False) + "\n")
+                    count += 1
+
+                    if count >= max_pairs:
+                        break
+                    if count % 10000 == 0:
+                        logger.info(f"  BPCC: {count} pairs fetched")
+
+        except Exception as e:
+            logger.error(f"Error fetching BPCC {src}-{tgt}: {e}")
+            logger.info("Available configs may differ. Check HF dataset card for exact config names.")
+
+        logger.success(f"BPCC fetch complete: {count} pairs | Output: {output_path}")
+        return output_path
+
     # ─── Summary ──────────────────────────────────────────────────────────────
 
     def fetch_all(
@@ -436,7 +511,10 @@ if __name__ == "__main__":
     parser.add_argument("--dialects", nargs="+", default=ALL_DIALECTS)
     parser.add_argument("--max-vaani", type=int, default=5000)
     parser.add_argument("--max-karya", type=int, default=10000)
-    parser.add_argument("--with-audio", action="store_true", help="Download audio files for Whisper fine-tuning")
+    parser.add_argument("--with-audio", action="store_true", default=True, help="Download audio files for Whisper fine-tuning (default: True)")
+    parser.add_argument("--no-audio", action="store_false", dest="with_audio", help="Skip audio download (metadata only)")
+    parser.add_argument("--bpcc", action="store_true", help="Also fetch BPCC parallel text for MT")
+    parser.add_argument("--bpcc-pairs", type=int, default=100000, help="Max BPCC pairs to download")
     args = parser.parse_args()
 
     fetcher = DatasetFetcher(output_dir=args.output_dir)
@@ -445,6 +523,9 @@ if __name__ == "__main__":
         fetcher.fetch_vaani_with_audio(dialects=args.dialects, max_samples_per_dialect=args.max_vaani)
     else:
         fetcher.fetch_all(dialects=args.dialects, max_vaani=args.max_vaani, max_karya=args.max_karya)
+
+    if args.bpcc:
+        fetcher.fetch_bpcc_sample(src="hi", tgt="en", max_pairs=args.bpcc_pairs)
 
     print("\n📊 Download Report:")
     for name, count in fetcher.report().items():

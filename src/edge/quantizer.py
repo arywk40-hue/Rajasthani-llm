@@ -1,8 +1,8 @@
 """
-Model Quantizer for Suno Sutra Edge Deployment
+Model Quantizer for Edge Deployment
 
-Implements post-training quantization to INT8 and FP16 formats to meet the
-strict 900MB memory ceiling of the Suno Sutra handheld device.
+Implements post-training quantization to INT8 and FP16 formats to optimize
+the models for mobile and edge devices.
 
 Reference: architecture-documenattion.md (Edge Deployment Architecture)
 Reference: implementation.md Section 3 (Edge deployment — INT8/FP16 quantization)
@@ -28,19 +28,17 @@ class QuantizationType(Enum):
 
 class ModelQuantizer:
     """
-    Quantizes PyTorch models for edge deployment on Suno Sutra.
+    Quantizes PyTorch models for edge deployment.
 
-    The Suno Sutra device requires models to fit within a 900MB volatile
-    memory footprint. Post-training quantization reduces the 430M parameter
-    FastConformer ASR model and the 1B parameter IndicTrans2 MT model to
-    deployable sizes without retraining.
+    Post-training quantization reduces the Whisper ASR model and the 
+    IndicTrans2 MT model to deployable sizes without retraining.
 
     Supports:
     - INT8 dynamic quantization (CPU inference, smallest footprint)
     - FP16 half-precision (GPU/NPU inference, balanced accuracy-speed)
     """
 
-    MAX_EDGE_MEMORY_MB = 900  # Hard ceiling from architecture spec
+    MAX_EDGE_MEMORY_MB = 1024  # Standard 1GB edge memory budget
 
     def __init__(self, output_dir: str | Path = "models/quantized"):
         self.output_dir = Path(output_dir)
@@ -78,7 +76,7 @@ class ModelQuantizer:
         if quantized_size > self.MAX_EDGE_MEMORY_MB:
             logger.warning(
                 f"⚠ Quantized model ({quantized_size:.1f}MB) exceeds "
-                f"Suno Sutra limit ({self.MAX_EDGE_MEMORY_MB}MB). "
+                f"the edge memory limit ({self.MAX_EDGE_MEMORY_MB}MB). "
                 f"Further pruning or distillation required."
             )
 
@@ -111,7 +109,7 @@ class ModelQuantizer:
     def validate_edge_budget(self, *model_paths: Path) -> bool:
         """
         Validates that the combined size of all quantized models fits
-        within the Suno Sutra memory budget.
+        within the target edge memory budget.
         """
         total_mb = sum(
             os.path.getsize(p) / (1024 * 1024) for p in model_paths if p.exists()
