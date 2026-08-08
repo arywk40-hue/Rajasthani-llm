@@ -1,0 +1,14 @@
+tts:
+  acoustic_model:
+    architecture: "FastPitch"
+    pitch_conditioning: true
+    duration_predictor: true
+  
+  vocoder:
+    architecture: "HiFi-GAN V1"
+    sample_rate: 22050
+
+  training:
+    epochs: 100
+    batch_size: 16
+    learning_rate: 2e-4

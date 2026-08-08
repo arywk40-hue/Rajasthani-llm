@@ -1,0 +1,13 @@
+deployment:
+  cloud:
+    framework: "FastAPI"
+    api_gateway: "Bhashini NHLT"
+    workers: 4
+    tls: true
+    log_retention_days: 30
+  
+  edge:
+    device: "Suno Sutra"
+    quantization: "INT8"
+    runtime: "CTranslate2"
+    max_memory_mb: 900

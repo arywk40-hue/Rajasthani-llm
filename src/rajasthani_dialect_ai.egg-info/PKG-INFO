@@ -1,0 +1,48 @@
+Metadata-Version: 2.4
+Name: rajasthani-dialect-ai
+Version: 0.1.0
+Summary: Cascaded S2ST AI for Rajasthani Dialects (Marwari, Mewari, Dhundhari, Hadoti, Mewati, Bagri)
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: torch>=2.0.0
+Requires-Dist: torchaudio>=2.0.0
+Requires-Dist: transformers>=4.30.0
+Requires-Dist: sentencepiece>=0.1.99
+Requires-Dist: fastapi>=0.100.0
+Requires-Dist: uvicorn[standard]>=0.23.0
+Requires-Dist: pyyaml>=6.0.1
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: loguru>=0.7.0
+Requires-Dist: dask[dataframe]>=2023.6.0
+Requires-Dist: polars>=0.19.0
+Requires-Dist: pyarrow>=13.0.0
+Requires-Dist: librosa>=0.10.0
+Requires-Dist: soundfile>=0.12.1
+Requires-Dist: onnxruntime>=1.15.1
+Requires-Dist: ctranslate2>=3.17.1
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4.0; extra == "dev"
+Requires-Dist: black>=23.7.0; extra == "dev"
+Requires-Dist: isort>=5.12.0; extra == "dev"
+Requires-Dist: mypy>=1.4.1; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+
+# Rajasthani Dialect AI
+
+This project develops robust, production-grade Artificial Intelligence (AI) language technologies for Marwari, Mewari, Dhundhari, Hadoti, Mewati, and Bagri dialects.
+
+It uses a cascaded Speech-to-Speech Translation (S2ST) approach:
+1.  **ASR (FastConformer):** Transcribes dialect audio to Devanagari text.
+2.  **MT (IndicTrans2):** Translates Devanagari text to the target language (e.g., English, Standard Hindi).
+3.  **TTS (FastPitch + HiFi-GAN):** Synthesizes human-like speech from text.
+
+## Features
+- Strict Devanagari normalization pipeline (Nukta, ळ preservation).
+- Cross-lingual transfer learning from standard Hindi.
+- Quantized edge execution (INT8/FP16) for Suno Sutra hardware.
+- Fully offline capable and DPDP-Act compliant (India-First localization).
+
+## Setup
+```bash
+make setup
+```

@@ -1,0 +1,22 @@
+project:
+  name: "Rajasthani Dialect AI"
+  version: "0.1.0"
+  supported_dialects:
+    - marwari
+    - mewari
+    - dhundhari
+    - hadoti
+    - mewati
+    - bagri
+  anchor_language: "hindi"
+
+data:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  checkpoints_dir: "checkpoints/"
+
+preprocessing:
+  unicode_normalization: "NFC"
+  nukta_standardization: true
+  preserve_retroflex_lateral_flap: true
+  max_text_length: 512

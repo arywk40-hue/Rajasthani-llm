@@ -1,0 +1,20 @@
+mt:
+  architecture: "IndicTrans2"
+  parameters: "1B"
+  vocab: "disjoint"
+
+  tokenizer:
+    type: "SentencePiece"
+    character_coverage: 1.0
+    model_type: "bpe"
+
+  training:
+    epochs: 30
+    learning_rate: 3e-5
+    batch_size: 64
+    label_smoothing: 0.1
+    max_source_positions: 210
+    
+    techniques:
+      - experience_replay
+      - model_souping

@@ -1,0 +1,16 @@
+torch>=2.0.0
+torchaudio>=2.0.0
+transformers>=4.30.0
+sentencepiece>=0.1.99
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+pyyaml>=6.0.1
+pydantic>=2.0.0
+loguru>=0.7.0
+dask[dataframe]>=2023.6.0
+polars>=0.19.0
+pyarrow>=13.0.0
+librosa>=0.10.0
+soundfile>=0.12.1
+onnxruntime>=1.15.1
+ctranslate2>=3.17.1

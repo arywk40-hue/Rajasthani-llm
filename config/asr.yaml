@@ -1,0 +1,17 @@
+asr:
+  architecture: "FastConformer"
+  decoder: "hybrid_tdt_ctc"
+  parameters: "430M"
+  
+  training:
+    epochs: 50
+    learning_rate: 1e-4
+    batch_size: 32
+    augmentations:
+      - spec_augment
+      - speed_perturbation: [0.9, 1.0, 1.1]
+      - noise_injection
+
+  input:
+    sample_rate: 16000
+    features: "log_mel_spectrogram"

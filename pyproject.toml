@@ -1,0 +1,45 @@
+[project]
+name = "rajasthani-dialect-ai"
+version = "0.1.0"
+description = "Cascaded S2ST AI for Rajasthani Dialects (Marwari, Mewari, Dhundhari, Hadoti, Mewati, Bagri)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.0.0",
+    "torchaudio>=2.0.0",
+    "transformers>=4.30.0",
+    "sentencepiece>=0.1.99",
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.23.0",
+    "pyyaml>=6.0.1",
+    "pydantic>=2.0.0",
+    "loguru>=0.7.0",
+    "dask[dataframe]>=2023.6.0",
+    "polars>=0.19.0",
+    "pyarrow>=13.0.0",
+    "librosa>=0.10.0",
+    "soundfile>=0.12.1",
+    "onnxruntime>=1.15.1",
+    "ctranslate2>=3.17.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "black>=23.7.0",
+    "isort>=5.12.0",
+    "mypy>=1.4.1",
+    "flake8>=6.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
+
+[tool.isort]
+profile = "black"
+line_length = 100

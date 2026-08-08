@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statement of Work — Bhashini Rajasthani Dialect AI Suite</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --indigo:   #1C0F4A;
+    --purple:   #3B1E8F;
+    --gold:     #C8A84B;
+    --gold-lt:  #E8CC7A;
+    --gold-dim: #7A6228;
+    --cream:    #F7F2E8;
+    --cream-dk: #EDE5D4;
+    --ink:      #1A1612;
+    --ink-mid:  #3D3530;
+    --ink-soft: #6B5F52;
+    --rule:     #D4C89A;
+    --white:    #FEFCF8;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: 240px;
+    height: 100vh;
+    background: var(--indigo);
+    overflow-y: auto;
+    padding: 32px 0 40px;
+    z-index: 100;
+    border-right: 1px solid #2D1870;
+  }
+
+  .sidebar-logo {
+    padding: 0 24px 28px;
+    border-bottom: 1px solid #2D1870;
+    margin-bottom: 20px;
+  }
+
+  .sidebar-logo .brand {
+    font-family: 'EB Garamond', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+  }
+
+  .sidebar-logo .sub {
+    font-size: 10px;
+    color: #8B7DB5;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .nav-section-label {
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #5B4D8A;
+    padding: 16px 24px 6px;
+    font-weight: 600;
+  }
+
+  .nav-link {
+    display: block;
+    padding: 8px 24px;
+    font-size: 12.5px;
+    color: #AFA3C8;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+
+  .nav-link:hover, .nav-link.active {
+    color: var(--gold-lt);
+    border-left-color: var(--gold);
+    background: rgba(200,168,75,0.07);
+  }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: 240px;
+    min-height: 100vh;
+  }
+
+  /* ── COVER ── */
+  .cover {
+    background: linear-gradient(145deg, var(--indigo) 0%, #2D1080 55%, #1C0F4A 100%);
+    color: white;
+    padding: 80px 64px 72px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 380px; height: 380px;
+    border: 1px solid rgba(200,168,75,0.15);
+    border-radius: 50%;
+  }
+
+  .cover::after {
+    content: '';
+    position: absolute;
+    top: -20px; right: -20px;
+    width: 260px; height: 260px;
+    border: 1px solid rgba(200,168,75,0.1);
+    border-radius: 50%;
+  }
+
+  .cover-badge {
+    display: inline-block;
+    background: rgba(200,168,75,0.15);
+    border: 1px solid rgba(200,168,75,0.4);
+    color: var(--gold-lt);
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 2px;
+    margin-bottom: 28px;
+    font-weight: 500;
+  }
+
+  .cover h1 {
+    font-family: 'EB Garamond', serif;
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1.15;
+    color: white;
+    max-width: 620px;
+    margin-bottom: 8px;
+  }
+
+  .cover h1 span { color: var(--gold-lt); }
+
+  .cover-subtitle {
+    font-size: 16px;
+    color: #B8A8D8;
+    max-width: 540px;
+    margin-top: 16px;
+    line-height: 1.6;
+  }
+
+  .cover-meta {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 48px;
+    max-width: 640px;
+  }
+
+  .meta-item label {
+    display: block;
+    font-size: 9.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #8B7DB5;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  .meta-item span {
+    font-size: 13.5px;
+    color: var(--gold-lt);
+    font-weight: 500;
+  }
+
+  .divider-gold {
+    width: 48px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+    margin: 32px 0 0;
+  }
+
+  /* ── CONTENT SECTIONS ── */
+  .content {
+    padding: 0 64px 80px;
+    max-width: 880px;
+  }
+
+  .section {
+    padding-top: 64px;
+  }
+
+  .section-eyebrow {
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .section h2 {
+    font-family: 'EB Garamond', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--indigo);
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+
+  .section-rule {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--rule) 40%, transparent 100%);
+    margin: 16px 0 28px;
+  }
+
+  .section h3 {
+    font-family: 'EB Garamond', serif;
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--purple);
+    margin: 28px 0 10px;
+  }
+
+  .section p {
+    color: var(--ink-mid);
+    margin-bottom: 14px;
+    font-size: 14.5px;
+  }
+
+  /* ── OBJECTIVES GRID ── */
+  .obj-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 8px;
+  }
+
+  .obj-card {
+    background: var(--white);
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--gold);
+    padding: 18px 20px;
+    border-radius: 3px;
+  }
+
+  .obj-card .obj-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    font-weight: 500;
+    margin-bottom: 6px;
+    letter-spacing: 0.06em;
+  }
+
+  .obj-card p {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  /* ── STAGES TIMELINE ── */
+  .stages-track {
+    position: relative;
+    padding-left: 56px;
+    margin-top: 8px;
+  }
+
+  .stages-track::before {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: 20px;
+    bottom: 20px;
+    width: 2px;
+    background: linear-gradient(180deg, var(--gold) 0%, var(--rule) 100%);
+  }
+
+  .stage-item {
+    position: relative;
+    background: var(--white);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+
+  .stage-item::before {
+    content: attr(data-num);
+    position: absolute;
+    left: -50px;
+    top: 16px;
+    width: 36px;
+    height: 36px;
+    background: var(--indigo);
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gold);
+    line-height: 36px;
+    text-align: center;
+  }
+
+  .stage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .stage-title {
+    font-weight: 600;
+    font-size: 14.5px;
+    color: var(--indigo);
+  }
+
+  .stage-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gold-dim);
+    background: rgba(200,168,75,0.1);
+    padding: 3px 8px;
+    border-radius: 2px;
+    white-space: nowrap;
+    margin-left: 12px;
+    flex-shrink: 0;
+  }
+
+  .stage-desc {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  .stage-deliverables {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--rule);
+  }
+
+  .stage-deliverables strong {
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .stage-deliverables ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .stage-deliverables ul li {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    padding: 2px 0 2px 14px;
+    position: relative;
+  }
+
+  .stage-deliverables ul li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  /* ── DIALECT TABLE ── */
+  .dialect-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 8px;
+    background: var(--white);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .dialect-table thead {
+    background: var(--indigo);
+    color: white;
+  }
+
+  .dialect-table thead th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--gold-lt);
+  }
+
+  .dialect-table tbody tr {
+    border-bottom: 1px solid var(--cream-dk);
+    transition: background 0.12s;
+  }
+
+  .dialect-table tbody tr:hover { background: rgba(200,168,75,0.05); }
+  .dialect-table tbody tr:last-child { border-bottom: none; }
+
+  .dialect-table tbody td {
+    padding: 11px 16px;
+    color: var(--ink-mid);
+    vertical-align: top;
+    font-size: 13px;
+  }
+
+  .dialect-table tbody td:first-child {
+    font-weight: 600;
+    color: var(--indigo);
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 2px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+
+  .badge-purple { background: rgba(59,30,143,0.1); color: var(--purple); }
+  .badge-gold   { background: rgba(200,168,75,0.15); color: var(--gold-dim); }
+  .badge-green  { background: rgba(30,120,60,0.1); color: #1E783C; }
+
+  /* ── METRICS TABLE ── */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 8px;
+  }
+
+  .metric-card {
+    background: var(--indigo);
+    border-radius: 4px;
+    padding: 24px 20px;
+    text-align: center;
+    border: 1px solid #2D1870;
+  }
+
+  .metric-card .metric-task {
+    font-size: 9.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #8B7DB5;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .metric-card .metric-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: var(--gold-lt);
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  .metric-card .metric-target {
+    font-family: 'EB Garamond', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .metric-card .metric-note {
+    font-size: 10.5px;
+    color: #8B7DB5;
+    line-height: 1.4;
+  }
+
+  /* ── TECH STACK ── */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 8px;
+  }
+
+  .tech-card {
+    background: var(--white);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 18px 20px;
+  }
+
+  .tech-card .tech-category {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .tech-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .tech-list li {
+    font-size: 13px;
+    color: var(--ink-mid);
+    padding: 4px 0;
+    border-bottom: 1px solid var(--cream-dk);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .tech-list li:last-child { border-bottom: none; }
+
+  /* ── TEAM TABLE ── */
+  .team-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 8px;
+    background: var(--white);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .team-table thead {
+    background: #2D1870;
+    color: var(--gold-lt);
+  }
+
+  .team-table thead th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .team-table tbody tr { border-bottom: 1px solid var(--cream-dk); }
+  .team-table tbody tr:last-child { border-bottom: none; }
+  .team-table tbody td { padding: 10px 16px; color: var(--ink-mid); }
+  .team-table tbody td:first-child { font-weight: 600; color: var(--indigo); font-size: 13.5px; }
+
+  /* ── COMPLIANCE CALLOUT ── */
+  .callout {
+    background: var(--white);
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--gold);
+    border-radius: 3px;
+    padding: 18px 20px;
+    margin: 16px 0;
+  }
+
+  .callout .callout-label {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .callout p {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  /* ── RISK TABLE ── */
+  .risk-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 8px;
+    background: var(--white);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .risk-table thead {
+    background: var(--indigo);
+    color: var(--gold-lt);
+  }
+
+  .risk-table thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .risk-table tbody tr { border-bottom: 1px solid var(--cream-dk); }
+  .risk-table tbody td { padding: 10px 14px; color: var(--ink-mid); vertical-align: top; }
+
+  .sev-high   { color: #B53030; font-weight: 700; font-size: 11px; }
+  .sev-med    { color: #B57B30; font-weight: 700; font-size: 11px; }
+  .sev-low    { color: #2E7D4E; font-weight: 700; font-size: 11px; }
+
+  /* ── FOOTER ── */
+  .doc-footer {
+    background: var(--indigo);
+    color: #6B5F9A;
+    padding: 28px 64px;
+    font-size: 11.5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-left: 240px;
+  }
+
+  .doc-footer .footer-brand {
+    font-family: 'EB Garamond', serif;
+    font-size: 14px;
+    color: var(--gold);
+    letter-spacing: 0.04em;
+  }
+
+  @media print {
+    .sidebar { display: none; }
+    .main, .doc-footer { margin-left: 0; }
+    .cover { padding: 48px; }
+    .content { padding: 0 48px 48px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">BHASHINI</div>
+    <div class="sub">Statement of Work</div>
+  </div>
+
+  <div class="nav-section-label">Document</div>
+  <a href="#cover"     class="nav-link">Cover Page</a>
+  <a href="#overview"  class="nav-link">Project Overview</a>
+  <a href="#objectives" class="nav-link">Objectives</a>
+
+  <div class="nav-section-label">Execution</div>
+  <a href="#stages"    class="nav-link">6-Stage Lifecycle</a>
+  <a href="#dialects"  class="nav-link">Dialect Coverage</a>
+  <a href="#technical" class="nav-link">Technical Approach</a>
+  <a href="#stack"     class="nav-link">Tools & Stack</a>
+
+  <div class="nav-section-label">Governance</div>
+  <a href="#metrics"   class="nav-link">Evaluation Metrics</a>
+  <a href="#team"      class="nav-link">Team & Roles</a>
+  <a href="#timeline"  class="nav-link">Timeline</a>
+  <a href="#risks"     class="nav-link">Risk Management</a>
+  <a href="#compliance" class="nav-link">Compliance</a>
+  <a href="#outcomes"  class="nav-link">Expected Outcomes</a>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- COVER -->
+  <div class="cover" id="cover">
+    <div class="cover-badge">Bhashini Hackathon 2026 · Official Submission</div>
+    <h1>Rajasthani Dialect<br><span>AI Language Suite</span></h1>
+    <p class="cover-subtitle">
+      A Statement of Work for building robust ASR, TTS, and Machine Translation systems across
+      Marwari, Mewari, Dhundhari, Hadoti, Mewati, and Bagri — enabling context-aware, multilingual
+      voice interaction with Hindi, English, and other Indian languages.
+    </p>
+    <div class="cover-meta">
+      <div class="meta-item">
+        <label>Document Type</label>
+        <span>Statement of Work</span>
+      </div>
+      <div class="meta-item">
+        <label>Submitted To</label>
+        <span>BHASHINI / MeitY</span>
+      </div>
+      <div class="meta-item">
+        <label>Prepared Date</label>
+        <span>04 August 2026</span>
+      </div>
+      <div class="meta-item">
+        <label>Dialects Covered</label>
+        <span>6 Rajasthani</span>
+      </div>
+      <div class="meta-item">
+        <label>AI Tasks</label>
+        <span>ASR · TTS · MT</span>
+      </div>
+      <div class="meta-item">
+        <label>Final Deliverable</label>
+        <span>23 October 2026</span>
+      </div>
+    </div>
+    <div class="divider-gold"></div>
+  </div>
+
+  <div class="content">
+
+    <!-- 1. OVERVIEW -->
+    <div class="section" id="overview">
+      <div class="section-eyebrow">Section 01</div>
+      <h2>Project Overview</h2>
+      <div class="section-rule"></div>
+
+      <p>
+        India's linguistic diversity extends far beyond the 22 scheduled languages. The Rajasthani
+        language group — comprising Marwari, Mewari, Dhundhari, Hadoti, Mewati, and Bagri — is
+        spoken by an estimated <strong>80–100 million speakers</strong> across Rajasthan, Haryana,
+        Gujarat, and Madhya Pradesh, yet remains severely underrepresented in AI language technology.
+      </p>
+      <p>
+        This project responds directly to the BHASHINI mandate of democratizing language technology
+        for every Indian citizen. We propose a full-stack AI development pipeline — from raw data
+        collection and linguistic validation through to production-grade model training, evaluation,
+        and Bhashini-API integration — executed across six structured stages aligned with the
+        hackathon's official lifecycle.
+      </p>
+      <p>
+        All models, datasets, and evaluation benchmarks produced will be contributed to the BHASHINI
+        open platform and licensed for public benefit, supporting long-term scalability and community
+        adoption.
+      </p>
+
+      <h3>Problem Being Solved</h3>
+      <p>
+        Current state-of-the-art models — including Whisper, IndicTrans2, Google Translate, and
+        NLLB-200 — produce unreliable or zero output for these six dialects. A speaker of Hadoti
+        attempting to use voice assistants for healthcare, agriculture, or governance is effectively
+        excluded from the digital ecosystem. This project directly closes that gap.
+      </p>
+    </div>
+
+    <!-- 2. OBJECTIVES -->
+    <div class="section" id="objectives">
+      <div class="section-eyebrow">Section 02</div>
+      <h2>Objectives</h2>
+      <div class="section-rule"></div>
+
+      <div class="obj-grid">
+        <div class="obj-card">
+          <div class="obj-num">OBJ-01</div>
+          <p>Benchmark existing AI translation models (text-to-text) for Marwari & Mewari ↔ English and other regional languages of India to establish a documented baseline.</p>
+        </div>
+        <div class="obj-card">
+          <div class="obj-num">OBJ-02</div>
+          <p>Collect and validate extensive voice and text data for all six dialects (Marwari, Mewari, Dhundhari, Hadoti, Mewati, Bagri) ensuring comprehensive phonemic and syntactic coverage.</p>
+        </div>
+        <div class="obj-card">
+          <div class="obj-num">OBJ-03</div>
+          <p>Build and train ASR, TTS, and MT models using newly curated datasets, enabling seamless voice-based communication in and across the six target dialects.</p>
+        </div>
+        <div class="obj-card">
+          <div class="obj-num">OBJ-04</div>
+          <p>Implement NLP techniques that preserve linguistic nuances, idiomatic expressions, tone, and grammatical fidelity in all translations and voice interactions.</p>
+        </div>
+        <div class="obj-card">
+          <div class="obj-num">OBJ-05</div>
+          <p>Evaluate prototypes using WER, MOS, BLEU/chrF, and use-case coverage to iteratively enhance accuracy — with a specific focus on rural health, governance, and agriculture domains.</p>
+        </div>
+        <div class="obj-card">
+          <div class="obj-num">OBJ-06</div>
+          <p>Encourage collaboration among AI researchers, linguists, and community validators; integrate with Bhashini APIs for real-world deployment and ensure DPDP Act 2023 compliance.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. STAGES -->
+    <div class="section" id="stages">
+      <div class="section-eyebrow">Section 03</div>
+      <h2>6-Stage AI Development Lifecycle</h2>
+      <div class="section-rule"></div>
+      <p>The following stages mirror the official BHASHINI hackathon execution lifecycle, with detailed scope, activities, and deliverables defined for each.</p>
+
+      <div class="stages-track">
+
+        <div class="stage-item" data-num="01">
+          <div class="stage-header">
+            <div class="stage-title">Stage 1 — Preliminary Screening</div>
+            <div class="stage-date">Aug 2026</div>
+          </div>
+          <p class="stage-desc">
+            Establish team credentials, competencies, and domain coverage. Map team members to their dialect expertise (native speakers, trained linguists, NLP engineers). Register on the Bhashini participant portal and submit team profile with skill evidence for vetting.
+          </p>
+          <div class="stage-deliverables">
+            <strong>Deliverables</strong>
+            <ul>
+              <li>Team profile document with dialect-expertise matrix</li>
+              <li>Preliminary literature review: existing work on Rajasthani NLP</li>
+              <li>Dialect identity map: phoneme inventories, script variants, geographic distribution</li>
+              <li>Initial data availability audit (existing corpora, web sources, recordings)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="stage-item" data-num="02">
+          <div class="stage-header">
+            <div class="stage-title">Stage 2 — Benchmarking Existing Models</div>
+            <div class="stage-date">Aug – Sep 2026</div>
+          </div>
+          <p class="stage-desc">
+            Systematically assess current limitations of state-of-the-art multilingual models on all six target dialects. Design a standardized benchmark test suite of 500 sentences per dialect (covering 10 semantic domains), and evaluate against NLLB-200, IndicTrans2, Whisper-large-v3, Google Translate, and IndicWav2Vec.
+          </p>
+          <div class="stage-deliverables">
+            <strong>Deliverables</strong>
+            <ul>
+              <li>Benchmark test suite: 500 sentences × 6 dialects × 10 domains (curated with native speaker validation)</li>
+              <li>Baseline score report: BLEU, chrF, WER, MOS per model per dialect</li>
+              <li>Failure mode analysis: phonological gaps, OOV rates, code-switching errors</li>
+              <li>Published benchmark leaderboard (publicly shareable)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="stage-item" data-num="03">
+          <div class="stage-header">
+            <div class="stage-title">Stage 3 — Data Collection & Validation</div>
+            <div class="stage-date">Sep – Oct 2026</div>
+          </div>
+          <p class="stage-desc">
+            Systematically collect and validate high-quality linguistic datasets for all six target dialects. Speech collection via mobile crowdsourcing app; text data from folk literature, regional newspapers, government documents, and parallel corpus construction. All data validated by native speakers through a double-blind annotation process.
+          </p>
+          <div class="stage-deliverables">
+            <strong>Deliverables</strong>
+            <ul>
+              <li>Speech corpus: 100+ hours per dialect (diverse age, gender, region, accent)</li>
+              <li>Text corpus: 500K+ tokens per dialect in Devanagari</li>
+              <li>Parallel corpus: Dialect ↔ Hindi ↔ English sentence pairs (50K+ per dialect)</li>
+              <li>Idiom & proverb database: 2,000+ entries per dialect with contextual notes</li>
+              <li>Data quality report: SNR analysis, speaker diversity statistics, annotation inter-rater agreement</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="stage-item" data-num="04">
+          <div class="stage-header">
+            <div class="stage-title">Stage 4 — Model Training & Optimization</div>
+            <div class="stage-date">Oct 2026 · Results: 12/10/2026</div>
+          </div>
+          <p class="stage-desc">
+            Fine-tune and train ASR, TTS, and MT models using the curated datasets. Employ parameter-efficient fine-tuning (LoRA/adapter layers) for dialect-conditioned multi-task learning. Cross-dialect transfer learning experiments to determine if Marwari ASR representations benefit Mewari training (and similar pairs).
+          </p>
+          <div class="stage-deliverables">
+            <strong>Deliverables</strong>
+            <ul>
+              <li>ASR model: IndicWav2Vec-based, fine-tuned per dialect with shared adapter layers</li>
+              <li>TTS model: VITS/FastSpeech2 fine-tuned, targeting MOS ≥ 3.8/5.0</li>
+              <li>MT model: IndicTrans2 fine-tuned on parallel corpus, dialect-conditioned</li>
+              <li>Code-switching handler: Marwari/Mewari–Hindi mixed-language robustness module</li>
+              <li>Model cards with training details, dataset statistics, and bias analysis</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="stage-item" data-num="05">
+          <div class="stage-header">
+            <div class="stage-title">Stage 5 — Testing & Iteration</div>
+            <div class="stage-date">Until 16/10 · Eval: 19–21/10 · Results: 22/10/2026</div>
+          </div>
+          <p class="stage-desc">
+            Validate AI models through structured iterative testing cycles, native speaker user studies, and domain-specific use-case evaluations (healthcare triage, agricultural advisories, governance queries). Use WER, MOS, BLEU, and use-case coverage as primary metrics. Run error-driven ablation studies to isolate sources of failure.
+          </p>
+          <div class="stage-deliverables">
+            <strong>Deliverables</strong>
+            <ul>
+              <li>Evaluation report: WER / MOS / BLEU / chrF per model per dialect</li>
+              <li>User study results: 20+ native speakers per dialect, structured feedback</li>
+              <li>Iterative improvement log: 3+ training cycles per model with metric deltas</li>
+              <li>Domain coverage analysis: healthcare, agriculture, governance query accuracy</li>
+              <li>Error taxonomy: phonemic, morphological, syntactic, idiomatic failure categories</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="stage-item" data-num="06">
+          <div class="stage-header">
+            <div class="stage-title">Stage 6 — Publishing Results & Scalability Planning</div>
+            <div class="stage-date">23 October 2026</div>
+          </div>
+          <p class="stage-desc">
+            Document all findings, open-source datasets and models, integrate with the Bhashini API ecosystem, and prepare a scalability roadmap for production deployment. Produce a research paper for potential submission to IndicNLP or LREC-COLING. Ensure all outputs comply with DPDP Act 2023 and are free of PII.
+          </p>
+          <div class="stage-deliverables">
+            <strong>Deliverables</strong>
+            <ul>
+              <li>Open-source release: all models on HuggingFace Hub under CC-BY 4.0</li>
+              <li>Dataset release: speech + text corpora on Bhashini Data Platform</li>
+              <li>Bhashini API integration: REST endpoints for ASR, TTS, MT per dialect</li>
+              <li>Research paper draft: IEEEtran / ACL format with experimental results</li>
+              <li>Scalability & deployment roadmap: on-device inference, offline-first mobile app</li>
+              <li>Final SoW completion and audit report</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 4. DIALECT COVERAGE -->
+    <div class="section" id="dialects">
+      <div class="section-eyebrow">Section 04</div>
+      <h2>Dialect Coverage Plan</h2>
+      <div class="section-rule"></div>
+      <p>Each dialect receives dedicated data collection, dedicated linguistic validators, and separate fine-tuned model heads. Cross-dialect transfer learning is explored as a parameter-efficiency strategy.</p>
+
+      <table class="dialect-table">
+        <thead>
+          <tr>
+            <th>Dialect</th>
+            <th>Primary Region</th>
+            <th>Speaker Est.</th>
+            <th>Script</th>
+            <th>Key Challenges</th>
+            <th>Priority</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Marwari</td>
+            <td>Western Rajasthan, Gujarat</td>
+            <td>~13 million</td>
+            <td>Devanagari + Mahajani</td>
+            <td>Heavy agglutination, tonal variation, code-switch with Hindi/Sindhi</td>
+            <td><span class="badge badge-gold">Primary</span></td>
+          </tr>
+          <tr>
+            <td>Mewari</td>
+            <td>Udaipur division</td>
+            <td>~5 million</td>
+            <td>Devanagari</td>
+            <td>Retroflex consonant clusters, distinct vowel inventory, low digital presence</td>
+            <td><span class="badge badge-gold">Primary</span></td>
+          </tr>
+          <tr>
+            <td>Dhundhari</td>
+            <td>Jaipur, Ajmer</td>
+            <td>~9 million</td>
+            <td>Devanagari</td>
+            <td>Closest to standard Hindi; differentiation at lexical/idiomatic level is critical</td>
+            <td><span class="badge badge-purple">Secondary</span></td>
+          </tr>
+          <tr>
+            <td>Hadoti</td>
+            <td>Kota, Bundi, Baran</td>
+            <td>~3 million</td>
+            <td>Devanagari</td>
+            <td>Scarce existing corpora, endangered status, significant dialectal sub-variation</td>
+            <td><span class="badge badge-purple">Secondary</span></td>
+          </tr>
+          <tr>
+            <td>Mewati</td>
+            <td>Mewat (Haryana/Rajasthan)</td>
+            <td>~1.5 million</td>
+            <td>Devanagari + Nastaliq</td>
+            <td>Urdu–Hindi–Rajasthani blend; dual-script community; near-endangered</td>
+            <td><span class="badge badge-purple">Secondary</span></td>
+          </tr>
+          <tr>
+            <td>Bagri</td>
+            <td>Ganganagar, Hanumangarh</td>
+            <td>~2 million</td>
+            <td>Devanagari</td>
+            <td>Punjab–Rajasthan contact zone; Punjabi phonology influence; sparse data</td>
+            <td><span class="badge badge-purple">Secondary</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 5. TECHNICAL APPROACH -->
+    <div class="section" id="technical">
+      <div class="section-eyebrow">Section 05</div>
+      <h2>Technical Methodology</h2>
+      <div class="section-rule"></div>
+
+      <h3>Automatic Speech Recognition (ASR)</h3>
+      <p>
+        <strong>Backbone:</strong> IndicWav2Vec (AI4Bharat) — pre-trained on 40+ Indian language acoustics — will be fine-tuned per dialect using CTC and attention-based decoding. Dialect-conditioned adapter layers (8M parameters) are appended to the shared frozen encoder, enabling parameter-efficient multi-dialect learning. A secondary Whisper-large-v3 fine-tune provides a cross-check baseline.
+      </p>
+      <p>
+        <strong>Data augmentation:</strong> Speed perturbation (±10%), SpecAugment (time/frequency masking), room impulse response convolution for acoustic robustness. A custom tokenizer trained on Devanagari sub-word units (SentencePiece, 8K vocabulary) handles morphological richness.
+      </p>
+
+      <h3>Text-to-Speech (TTS)</h3>
+      <p>
+        <strong>Architecture:</strong> VITS (Variational Inference with adversarial learning for end-to-end TTS) fine-tuned per dialect speaker cluster. A speaker-conditioning vector (d=256) captures dialect and speaker identity. Target naturalness: MOS ≥ 3.8. Evaluation includes both native-speaker MOS and automated metrics (UTMOS).
+      </p>
+      <p>
+        <strong>Zero-resource extension:</strong> For Hadoti and Mewati (lowest data), YourTTS-style cross-lingual transfer from Hindi TTS with dialect-specific prosody adapters will be explored as a data-scarce fallback.
+      </p>
+
+      <h3>Machine Translation (MT)</h3>
+      <p>
+        <strong>Backbone:</strong> IndicTrans2 (AI4Bharat) — state-of-the-art for 22 Indian languages — will be fine-tuned on our parallel corpus. Target language pairs: Dialect ↔ Hindi, Dialect ↔ English, and cross-dialect (Marwari ↔ Mewari). An idiom substitution module, backed by our phrase database, intercepts idiomatic expressions pre-translation to prevent literal mistranslation.
+      </p>
+      <p>
+        <strong>Code-switching robustness:</strong> A language identification prefix tag (e.g., <code>[MRW]</code>, <code>[MEW]</code>) is prepended during training to condition the model on dialect identity and handle mixed Rajasthani–Hindi input naturally.
+      </p>
+
+      <h3>NLP Preservation Layer</h3>
+      <p>
+        A dedicated post-processing layer handles: (1) honorific and register mapping (Rajasthani has elaborate pronoun hierarchies absent in Hindi), (2) proverb/idiom lookup with contextual substitution, (3) script normalization for dual-script dialects (Mewati: Nastaliq ↔ Devanagari). This layer is applied as a rule-guided post-processor on MT outputs before delivery to end users.
+      </p>
+    </div>
+
+    <!-- 6. STACK -->
+    <div class="section" id="stack">
+      <div class="section-eyebrow">Section 06</div>
+      <h2>Tools, Frameworks & Infrastructure</h2>
+      <div class="section-rule"></div>
+
+      <div class="tech-grid">
+        <div class="tech-card">
+          <div class="tech-category">ASR / Speech</div>
+          <ul class="tech-list">
+            <li>IndicWav2Vec <span class="badge badge-gold">primary</span></li>
+            <li>Whisper-large-v3 <span class="badge badge-purple">baseline</span></li>
+            <li>ESPnet 2 <span class="badge badge-purple">training</span></li>
+            <li>Kaldi (feature extraction)</li>
+            <li>librosa / torchaudio</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <div class="tech-category">TTS / Voice Synthesis</div>
+          <ul class="tech-list">
+            <li>VITS <span class="badge badge-gold">primary</span></li>
+            <li>YourTTS <span class="badge badge-purple">low-resource</span></li>
+            <li>FastSpeech2 (baseline)</li>
+            <li>HiFi-GAN (vocoder)</li>
+            <li>UTMOS (automated eval)</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <div class="tech-category">Machine Translation</div>
+          <ul class="tech-list">
+            <li>IndicTrans2 <span class="badge badge-gold">primary</span></li>
+            <li>NLLB-200 <span class="badge badge-purple">baseline</span></li>
+            <li>mBART-50</li>
+            <li>SentencePiece (tokenizer)</li>
+            <li>sacreBLEU + chrF (eval)</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <div class="tech-category">ML Framework & Infra</div>
+          <ul class="tech-list">
+            <li>PyTorch 2.x + HuggingFace</li>
+            <li>🤗 PEFT / LoRA adapters</li>
+            <li>MLflow (experiment tracking)</li>
+            <li>Label Studio (annotation)</li>
+            <li>PARAM Siddhi / AWS GPU</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <div class="tech-category">Data Collection</div>
+          <ul class="tech-list">
+            <li>Bhashini Shoonya App (crowdsource)</li>
+            <li>Common Voice pipeline (adapted)</li>
+            <li>Web scraping: Rajasthan Patrika</li>
+            <li>Back-translation augmentation</li>
+            <li>FFmpeg / WebRTC (audio QA)</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <div class="tech-category">Deployment & Integration</div>
+          <ul class="tech-list">
+            <li>Bhashini ULCA API integration</li>
+            <li>FastAPI (model serving)</li>
+            <li>ONNX / TorchScript (mobile)</li>
+            <li>Whisper-tiny (on-device offline)</li>
+            <li>Docker + GitHub Actions (CI)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. METRICS -->
+    <div class="section" id="metrics">
+      <div class="section-eyebrow">Section 07</div>
+      <h2>Evaluation Metrics & Targets</h2>
+      <div class="section-rule"></div>
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-task">ASR</div>
+          <div class="metric-name">Word Error Rate</div>
+          <div class="metric-target">&lt; 15%</div>
+          <div class="metric-note">Measured on held-out test sets. Dialects: all six. Domain: read speech + spontaneous.</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-task">TTS</div>
+          <div class="metric-name">Mean Opinion Score</div>
+          <div class="metric-target">≥ 3.8</div>
+          <div class="metric-note">5-point Likert scale. 20+ native speaker evaluators per dialect. Automated UTMOS as secondary.</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-task">MT</div>
+          <div class="metric-name">BLEU Score</div>
+          <div class="metric-target">&gt; 30</div>
+          <div class="metric-note">Dialect → Hindi and Dialect → English. chrF as secondary metric. sacreBLEU standard.</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-task">MT</div>
+          <div class="metric-name">chrF Score</div>
+          <div class="metric-target">&gt; 50</div>
+          <div class="metric-note">Character-level F-score — more robust for morphologically rich Rajasthani dialects.</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-task">System</div>
+          <div class="metric-name">Use-Case Coverage</div>
+          <div class="metric-target">&gt; 80%</div>
+          <div class="metric-note">Healthcare, agriculture, governance query domains. Native speaker validation panel per domain.</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-task">MT / NLP</div>
+          <div class="metric-name">Idiom Preservation</div>
+          <div class="metric-target">&gt; 75%</div>
+          <div class="metric-note">% of idiomatic phrases correctly handled (non-literal translation). Manual evaluation by linguists.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. TEAM -->
+    <div class="section" id="team">
+      <div class="section-eyebrow">Section 08</div>
+      <h2>Team Composition & Roles</h2>
+      <div class="section-rule"></div>
+
+      <table class="team-table">
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Responsibilities</th>
+            <th>Dialect Expertise</th>
+            <th>Deliverable Ownership</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Project Lead / ML Architect</td>
+            <td>Overall pipeline architecture, model training strategy, Bhashini API integration, final deliverables</td>
+            <td>Marwari, Dhundhari</td>
+            <td>Stages 4, 5, 6</td>
+          </tr>
+          <tr>
+            <td>NLP / MT Engineer</td>
+            <td>IndicTrans2 fine-tuning, parallel corpus pipeline, idiom module, BLEU/chrF evaluation</td>
+            <td>Marwari, Mewari</td>
+            <td>Stages 2, 4, 5</td>
+          </tr>
+          <tr>
+            <td>Speech / ASR Engineer</td>
+            <td>IndicWav2Vec fine-tuning, audio data pipeline, WER evaluation, on-device optimization</td>
+            <td>Hadoti, Bagri</td>
+            <td>Stages 3, 4, 5</td>
+          </tr>
+          <tr>
+            <td>TTS Engineer</td>
+            <td>VITS training, MOS evaluation, speaker conditioning, HiFi-GAN vocoder integration</td>
+            <td>Dhundhari, Mewati</td>
+            <td>Stages 4, 5</td>
+          </tr>
+          <tr>
+            <td>Computational Linguist</td>
+            <td>Phoneme inventory design, annotation guidelines, idiom/proverb database, error taxonomy</td>
+            <td>All 6 dialects</td>
+            <td>Stages 1, 2, 3</td>
+          </tr>
+          <tr>
+            <td>Data Collection Lead</td>
+            <td>Crowdsource campaign management, speaker recruitment, SNR QA, parallel corpus creation</td>
+            <td>All 6 dialects</td>
+            <td>Stage 3</td>
+          </tr>
+          <tr>
+            <td>Native Speaker Validators (×6)</td>
+            <td>One per dialect — sentence validation, MOS evaluation, idiom verification, domain QA</td>
+            <td>One each</td>
+            <td>Stages 2, 3, 5</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 9. TIMELINE -->
+    <div class="section" id="timeline">
+      <div class="section-eyebrow">Section 09</div>
+      <h2>Project Timeline</h2>
+      <div class="section-rule"></div>
+
+      <table class="dialect-table">
+        <thead>
+          <tr>
+            <th>Milestone</th>
+            <th>Target Date</th>
+            <th>Stage</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Team registration & dialect expertise matrix submitted</td>
+            <td>04 Aug 2026</td>
+            <td>Stage 1</td>
+            <td><span class="badge badge-gold">Today</span></td>
+          </tr>
+          <tr>
+            <td>Preliminary screening: literature review & dialect identity map</td>
+            <td>10 Aug 2026</td>
+            <td>Stage 1</td>
+            <td><span class="badge badge-green">In Progress</span></td>
+          </tr>
+          <tr>
+            <td>Benchmark test suite finalized (500 sentences × 6 dialects)</td>
+            <td>25 Aug 2026</td>
+            <td>Stage 2</td>
+            <td><span class="badge badge-purple">Upcoming</span></td>
+          </tr>
+          <tr>
+            <td>Baseline model benchmark results published</td>
+            <td>10 Sep 2026</td>
+            <td>Stage 2</td>
+            <td><span class="badge badge-purple">Upcoming</span></td>
+          </tr>
+          <tr>
+            <td>Speech & text corpus collection complete (600+ hours total)</td>
+            <td>25 Sep 2026</td>
+            <td>Stage 3</td>
+            <td><span class="badge badge-purple">Upcoming</span></td>
+          </tr>
+          <tr>
+            <td>Parallel corpus validated (300K+ sentence pairs)</td>
+            <td>02 Oct 2026</td>
+            <td>Stage 3</td>
+            <td><span class="badge badge-purple">Upcoming</span></td>
+          </tr>
+          <tr>
+            <td>ASR, TTS, MT v1.0 models trained & submitted</td>
+            <td>10 Oct 2026</td>
+            <td>Stage 4</td>
+            <td><span class="badge badge-purple">Upcoming</span></td>
+          </tr>
+          <tr>
+            <td>Declaration of Stage 4 results (Bhashini official)</td>
+            <td>12 Oct 2026</td>
+            <td>Stage 4</td>
+            <td><span class="badge badge-purple">Upcoming</span></td>
+          </tr>
+          <tr>
+            <td>Iterative testing & model refinement complete</td>
+            <td>16 Oct 2026</td>
+            <td>Stage 5</td>
+            <td><span class="badge badge-purple">Upcoming</span></td>
+          </tr>
+          <tr>
+            <td>Stage 5 formal evaluation (Bhashini official)</td>
+            <td>19–21 Oct 2026</td>
+            <td>Stage 5</td>
+            <td><span class="badge badge-purple">Upcoming</span></td>
+          </tr>
+          <tr>
+            <td>Declaration of Stage 5 results (Bhashini official)</td>
+            <td>22 Oct 2026</td>
+            <td>Stage 5</td>
+            <td><span class="badge badge-purple">Upcoming</span></td>
+          </tr>
+          <tr>
+            <td>Open-source release, Bhashini API integration, research paper submission</td>
+            <td>23 Oct 2026</td>
+            <td>Stage 6</td>
+            <td><span class="badge badge-purple">Upcoming</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 10. RISKS -->
+    <div class="section" id="risks">
+      <div class="section-eyebrow">Section 10</div>
+      <h2>Risk Management</h2>
+      <div class="section-rule"></div>
+
+      <table class="risk-table">
+        <thead>
+          <tr>
+            <th>Risk</th>
+            <th>Severity</th>
+            <th>Likelihood</th>
+            <th>Mitigation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Insufficient speech data for Hadoti / Mewati / Bagri within timeline</td>
+            <td><span class="sev-high">High</span></td>
+            <td>Medium</td>
+            <td>Parallel crowdsourcing via Bhashini Shoonya; cross-dialect transfer from Marwari as fallback; synthetic augmentation via TTS back-generation</td>
+          </tr>
+          <tr>
+            <td>Low inter-annotator agreement due to dialect continuum ambiguity</td>
+            <td><span class="sev-med">Medium</span></td>
+            <td>High</td>
+            <td>Strict annotation guidelines per dialect; 3-annotator majority vote; linguist arbitration protocol</td>
+          </tr>
+          <tr>
+            <td>Model WER/BLEU below targets at Stage 4 evaluation</td>
+            <td><span class="sev-med">Medium</span></td>
+            <td>Medium</td>
+            <td>Early partial model checkpoints tested at Stage 3; iterative curriculum training; ensemble decoding fallback</td>
+          </tr>
+          <tr>
+            <td>GPU compute resource unavailability (PARAM Siddhi access delay)</td>
+            <td><span class="sev-med">Medium</span></td>
+            <td>Low</td>
+            <td>AWS/GCP spot instances as backup; PEFT/LoRA reduces compute requirements by ~60% vs full fine-tuning</td>
+          </tr>
+          <tr>
+            <td>Data privacy / PII in crowdsourced speech recordings</td>
+            <td><span class="sev-high">High</span></td>
+            <td>Low</td>
+            <td>Informed consent protocol; automated PII redaction pipeline; DPDP Act 2023 compliance review before any data release</td>
+          </tr>
+          <tr>
+            <td>Recruitment of sufficient Hadoti / Bagri native speaker validators</td>
+            <td><span class="sev-low">Low</span></td>
+            <td>Medium</td>
+            <td>Partner with local colleges (JNVU Jodhpur, Kota University); coordinate with district-level Bhashini nodes</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 11. COMPLIANCE -->
+    <div class="section" id="compliance">
+      <div class="section-eyebrow">Section 11</div>
+      <h2>Data Security & Compliance</h2>
+      <div class="section-rule"></div>
+
+      <div class="callout">
+        <div class="callout-label">Regulatory Framework</div>
+        <p>All data collection, storage, and model development activities comply with the <strong>Digital Personal Data Protection (DPDP) Act 2023</strong> and Bhashini's data governance norms. No personally identifiable information will be retained in published datasets.</p>
+      </div>
+
+      <h3>Data Collection</h3>
+      <p>Every speaker participant provides written and digital informed consent before recording. Consent forms are available in the speaker's native dialect. Participants may withdraw at any time with full data deletion. Speaker demographic metadata (age band, gender, region) is collected in anonymized, bucketed form only — no names, IDs, or contact details are stored alongside audio files.</p>
+
+      <h3>Data Storage & Access</h3>
+      <p>Raw recordings are stored in encrypted S3-compatible storage (AES-256 at rest, TLS 1.3 in transit). Access is role-restricted (annotation team, QA team). After corpus finalization, raw audio undergoes automated PII screening before public release. All published data is anonymized at speaker level.</p>
+
+      <h3>Model Outputs</h3>
+      <p>Trained models are evaluated for demographic bias (age, gender, regional accent parity in WER/MOS scores). Any model exhibiting statistically significant bias (&gt;5% WER disparity across demographic groups) undergoes targeted re-training before release. Model cards include explicit bias analysis sections.</p>
+
+      <h3>Bhashini API Integration</h3>
+      <p>Production API integration follows Bhashini ULCA data usage norms. No user query data is logged without explicit user consent. Offline/on-device deployment is prioritized for rural users where data sovereignty concerns are heightened.</p>
+    </div>
+
+    <!-- 12. OUTCOMES -->
+    <div class="section" id="outcomes">
+      <div class="section-eyebrow">Section 12</div>
+      <h2>Expected Outcomes & Impact</h2>
+      <div class="section-rule"></div>
+
+      <p>
+        Upon successful completion, this project will produce the most comprehensive AI language technology suite ever developed for the Rajasthani dialect group — an estimated <strong>80–100 million speakers</strong> who gain meaningful access to voice-first digital services for the first time.
+      </p>
+
+      <div class="obj-grid">
+        <div class="obj-card">
+          <div class="obj-num">Technical</div>
+          <p>First unified multi-dialect ASR/TTS/MT system for 6 Rajasthani dialects. Novel dialect-conditioned adapter architecture. Publicly documented cross-dialect transfer learning findings.</p>
+        </div>
+        <div class="obj-card">
+          <div class="obj-num">Data</div>
+          <p>600+ hours of dialect speech. 3M+ tokens of validated text. 300K+ parallel sentence pairs. 12,000+ idiom/proverb entries. All openly licensed on Bhashini ULCA.</p>
+        </div>
+        <div class="obj-card">
+          <div class="obj-num">Research</div>
+          <p>Research paper submitted to IndicNLP 2027 or ACL 2027. Benchmark leaderboard published. Failure mode analysis informing future low-resource NLP work.</p>
+        </div>
+        <div class="obj-card">
+          <div class="obj-num">Social Impact</div>
+          <p>Healthcare triage voice assistants for rural Rajasthan. Agricultural advisory in native dialect. Governance query handling for non-Hindi-literate citizens. Real-world Bhashini integration.</p>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top: 28px;">
+        <div class="callout-label">Long-term Vision</div>
+        <p>
+          The datasets, models, and benchmarks produced here lay the foundation for future work on Rajasthani as a full ISO-recognized language in NLP systems — contributing to India's goal of ensuring no citizen is left behind in the digital transformation, regardless of the language they speak at home.
+        </p>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+</div><!-- /main -->
+
+<footer class="doc-footer">
+  <div>
+    <div class="footer-brand">BHASHINI — Rajasthani Dialect AI Suite</div>
+    Statement of Work · Prepared 04 August 2026
+  </div>
+  <div>Confidential — For Submission to BHASHINI Hackathon 2026</div>
+</footer>
+
+<script>
+  // Highlight active nav link on scroll
+  const sections = document.querySelectorAll('.section, .cover');
+  const navLinks = document.querySelectorAll('.nav-link');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        navLinks.forEach(link => {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { rootMargin: '-40% 0px -55% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>
