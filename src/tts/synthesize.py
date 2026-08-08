@@ -109,9 +109,10 @@ class IndicTTSSynthesizer:
         self._ensure_loaded()
 
         if self._fastpitch is None or self._hifigan is None:
-            logger.warning("TTS models not loaded — returning silence")
-            import numpy as np
-            return np.zeros(22050, dtype=np.float32)  # 1 second silence
+            raise RuntimeError(
+                "TTS models are not loaded. Check server logs for the load error. "
+                "Ensure the model ID is valid or configure Bhashini API key."
+            )
 
         # Process text through processor
         inputs = self._processor(

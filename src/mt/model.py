@@ -100,9 +100,15 @@ class IndicTrans2MT(nn.Module):
     ):
         super().__init__()
         self.config_path = Path(config_path)
-        with open(self.config_path, "r") as f:
-            cfg = yaml.safe_load(f)
-        self.config = cfg.get("mt", {})
+        if self.config_path.exists():
+            with open(self.config_path, "r") as f:
+                cfg = yaml.safe_load(f)
+            self.config = cfg.get("mt", {})
+        else:
+            logger.warning(
+                f"MT config not found at {self.config_path}. Using defaults."
+            )
+            self.config = {}
 
         self.parameters_size = self.config.get("parameters", "1B")
         if device:
@@ -384,7 +390,7 @@ class IndicTrans2MT(nn.Module):
             souped_state[key] = base_state[key].float() * base_weight
 
         for ckpt_path in checkpoint_paths:
-            ckpt_state = torch.load(ckpt_path, map_location="cpu")
+            ckpt_state = torch.load(ckpt_path, map_location="cpu", weights_only=True)
             for key in souped_state:
                 if key in ckpt_state:
                     souped_state[key] += ckpt_state[key].float() * ft_weight

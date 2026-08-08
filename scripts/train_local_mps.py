@@ -66,6 +66,7 @@ def prepare_combined_mt_dataset(output_path: Path):
     return output_path
 
 def main():
+    os.environ["PYTORCH_MPS_HIGH_WATERMARK_RATIO"] = "0.0"
     device = "mps" if hasattr(torch.backends, "mps") and torch.backends.mps.is_available() else "cpu"
     logger.info(f"Starting Local Translation Training on Device: {device.upper()}")
 
@@ -75,14 +76,14 @@ def main():
     mt_model = IndicTrans2MT(device=device)
     trainer = MTTrainer(mt_model, device=device)
 
-    # Launch local training
-    logger.info("Executing training loop on Apple Silicon MPS...")
+    # Launch local training with small batch size for low memory footprint
+    logger.info("Executing training loop on Apple Silicon MPS (batch_size=1, grad_accum=8)...")
     output_checkpoint = trainer.train_manual(
         dialect_data=dataset_path,
         output_dir="models/checkpoints/mt_mps",
         num_epochs=3,
-        batch_size=4,
-        gradient_accumulation_steps=2
+        batch_size=1,
+        gradient_accumulation_steps=8
     )
 
     logger.success(f"MPS Local Training Finished! Saved checkpoint to {output_checkpoint}")

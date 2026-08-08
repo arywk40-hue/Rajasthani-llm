@@ -35,13 +35,22 @@ class ASRDataset(Dataset):
         record = self.records[idx]
         audio_path = record["audio_path"]
         text = record["text"]
-        
-        # Load audio (placeholder for torchaudio.load)
-        # waveform, sample_rate = torchaudio.load(audio_path)
-        # Using dummy tensors for the skeleton implementation
-        waveform = torch.randn(1, 16000 * 2) # 2 seconds of audio
-        sample_rate = 16000
-        
+
+        # Load real audio from disk
+        waveform, sample_rate = torchaudio.load(audio_path)
+
+        # Resample to 16kHz if needed
+        if sample_rate != 16000:
+            resampler = torchaudio.transforms.Resample(
+                orig_freq=sample_rate, new_freq=16000
+            )
+            waveform = resampler(waveform)
+            sample_rate = 16000
+
+        # Convert stereo to mono
+        if waveform.shape[0] > 1:
+            waveform = waveform.mean(dim=0, keepdim=True)
+
         # Tokenize text
         token_ids = self.sp_model.encode(text)
         

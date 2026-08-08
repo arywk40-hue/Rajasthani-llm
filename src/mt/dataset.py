@@ -257,7 +257,7 @@ def create_mt_dataloader(
             batch_size=batch_size,
             sampler=sampler,
             num_workers=num_workers,
-            pin_memory=True,
+            pin_memory=False,
         )
     else:
         return DataLoader(
@@ -265,5 +265,5 @@ def create_mt_dataloader(
             batch_size=batch_size,
             shuffle=True,
             num_workers=num_workers,
-            pin_memory=True,
+            pin_memory=False,
         )

@@ -386,12 +386,18 @@ class MTTrainer:
             return 0.0
 
         sources, references = [], []
+        src_lang_code = "hin_Deva"
+        tgt_lang_code = "hin_Deva"
         with open(eval_path, "r", encoding="utf-8") as f:
             for line in f:
                 try:
                     record = json.loads(line.strip())
                     sources.append(record.get("source_text", ""))
                     references.append(record.get("target_text", ""))
+                    # Read lang codes from first record
+                    if len(sources) == 1:
+                        src_lang_code = record.get("source_lang", "hin_Deva")
+                        tgt_lang_code = record.get("target_lang", "hin_Deva")
                 except json.JSONDecodeError:
                     continue
 
@@ -401,9 +407,9 @@ class MTTrainer:
         # Translate
         self.model._hf_model.eval()
         translations = self.model.translate(
-            sources[:100],  # Cap at 100 for speed during training
-            src_lang=sources[0] if sources else "hi",
-            tgt_lang="hi",
+            sources[:100],
+            src_lang=src_lang_code,
+            tgt_lang=tgt_lang_code,
         )
         self.model._hf_model.train()
 

@@ -6,7 +6,9 @@ mirroring the Bhashini NHLT API contract.
 """
 
 import base64
+import hmac
 import io
+import os
 
 from fastapi import APIRouter, Depends, HTTPException, Header, Request
 from pydantic import BaseModel, Field
@@ -14,6 +16,10 @@ from typing import Optional
 from loguru import logger
 
 router = APIRouter()
+
+# API key is loaded once at module import time from environment.
+# Set via:  export API_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
+_EXPECTED_API_KEY: str = os.environ.get("API_SECRET_KEY", "")
 
 
 # ─── Request / Response Schemas ───────────────────────────────────────────────
@@ -35,7 +41,8 @@ class TranslateResponse(BaseModel):
 
 class ASRRequest(BaseModel):
     """Schema for ASR transcription requests."""
-    audio_base64: str = Field(..., description="Base64-encoded audio (16kHz WAV)")
+    # 10 MB base64 ≈ 7.5 MB raw ≈ ~7 min mono 16kHz WAV — reasonable upper bound
+    audio_base64: str = Field(..., max_length=10 * 1024 * 1024, description="Base64-encoded audio (16kHz WAV)")
     dialect: str = Field(..., description="Dialect hint (marwari, mewari, etc.)")
 
 
@@ -61,13 +68,20 @@ class TTSResponse(BaseModel):
 
 # ─── API Key Authentication ──────────────────────────────────────────────────
 
-async def verify_api_key(x_api_key: Optional[str] = Header(None, alias="X-API-Key")):
+async def verify_api_key(x_api_key: str = Header(..., alias="X-API-Key")):
     """
-    Validates the Bhashini API key.
-    Defaults to demo key for local dev and UI usage.
+    Validates the API key using constant-time comparison to prevent timing attacks.
+    Set the expected key via the API_SECRET_KEY environment variable before starting the server:
+        export API_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
     """
-    if not x_api_key:
-        return "bhashini_demo_key"
+    if not _EXPECTED_API_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="Server API key not configured. Set API_SECRET_KEY environment variable.",
+        )
+    # hmac.compare_digest prevents timing-oracle attacks
+    if not hmac.compare_digest(x_api_key.encode("utf-8"), _EXPECTED_API_KEY.encode("utf-8")):
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
     return x_api_key
 
 
@@ -139,7 +153,7 @@ async def transcribe_audio(
     return ASRResponse(
         transcribed_text=transcribed,
         dialect=payload.dialect,
-        confidence=0.85, # Note: Whisper doesn't natively expose simple sequence confidence, proxying for demo
+        confidence=0.0,  # Whisper does not expose per-sequence confidence natively; 0.0 = unknown
     )
 
 
