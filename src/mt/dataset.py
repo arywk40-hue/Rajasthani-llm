@@ -105,14 +105,13 @@ class MTDataset(Dataset):
                 return_tensors="pt",
             )
             # Tokenize targets
-            with self.tokenizer.as_target_tokenizer():
-                target_encoding = self.tokenizer(
-                    tgt_text,
-                    max_length=self.max_target_length,
-                    padding="max_length",
-                    truncation=True,
-                    return_tensors="pt",
-                )
+            target_encoding = self.tokenizer(
+                text_target=tgt_text,
+                max_length=self.max_target_length,
+                padding="max_length",
+                truncation=True,
+                return_tensors="pt",
+            )
 
             item["input_ids"] = source_encoding["input_ids"].squeeze(0)
             item["attention_mask"] = source_encoding["attention_mask"].squeeze(0)

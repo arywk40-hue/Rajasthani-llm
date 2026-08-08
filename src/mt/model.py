@@ -307,10 +307,9 @@ class IndicTrans2MT(nn.Module):
         )
 
         # Step 4: Decode
-        with self._tokenizer.as_target_tokenizer():
-            translations = self._tokenizer.batch_decode(
-                generated_ids, skip_special_tokens=True
-            )
+        translations = self._tokenizer.batch_decode(
+            generated_ids, skip_special_tokens=True
+        )
 
         # Step 5: IndicProcessor postprocessing
         if self._processor is not None:
