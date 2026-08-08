@@ -97,6 +97,11 @@ class MTDataset(Dataset):
 
         # Tokenize if tokenizer is available
         if self.tokenizer is not None:
+            if hasattr(self.tokenizer, "src_lang") and getattr(self.tokenizer, "src_lang", None) is None:
+                self.tokenizer.src_lang = "hi"
+            if hasattr(self.tokenizer, "tgt_lang") and getattr(self.tokenizer, "tgt_lang", None) is None:
+                self.tokenizer.tgt_lang = "hi"
+
             source_encoding = self.tokenizer(
                 src_text,
                 max_length=self.max_source_length,

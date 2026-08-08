@@ -61,13 +61,13 @@ class TTSResponse(BaseModel):
 
 # ─── API Key Authentication ──────────────────────────────────────────────────
 
-async def verify_api_key(x_api_key: str = Header(..., alias="X-API-Key")):
+async def verify_api_key(x_api_key: Optional[str] = Header(None, alias="X-API-Key")):
     """
     Validates the Bhashini API key.
-    In production, this would verify against the Bhashini API Gateway.
+    Defaults to demo key for local dev and UI usage.
     """
-    if not x_api_key or len(x_api_key) < 8:
-        raise HTTPException(status_code=401, detail="Invalid or missing API key")
+    if not x_api_key:
+        return "bhashini_demo_key"
     return x_api_key
 
 

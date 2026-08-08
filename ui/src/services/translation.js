@@ -27,10 +27,11 @@ export async function translateText(sourceLang, targetLang, text) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'X-API-Key': 'bhashini_demo_key',
       },
       body: JSON.stringify({
         text: text.trim(),
-        src_dialect: sourceLang,
+        src_lang: sourceLang,
         tgt_lang: targetLang,
       }),
     });

@@ -105,7 +105,14 @@ class IndicTrans2MT(nn.Module):
         self.config = cfg.get("mt", {})
 
         self.parameters_size = self.config.get("parameters", "1B")
-        self._device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        if device:
+            self._device = device
+        elif torch.cuda.is_available():
+            self._device = "cuda"
+        elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            self._device = "mps"
+        else:
+            self._device = "cpu"
 
         # Model components (lazy-loaded)
         self._hf_model = None
@@ -175,10 +182,26 @@ class IndicTrans2MT(nn.Module):
 
         except Exception as e:
             logger.warning(
-                f"Could not load HuggingFace model: {e}. "
-                f"Falling back to skeleton model for development."
+                f"Could not load primary model ({model_name}): {e}. "
+                f"Attempting fallback to open non-gated translation model (facebook/m2m100_418M)..."
             )
-            return False
+            try:
+                from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+                fallback_name = "facebook/m2m100_418M"
+                self._tokenizer = AutoTokenizer.from_pretrained(fallback_name)
+                self._hf_model = AutoModelForSeq2SeqLM.from_pretrained(
+                    fallback_name,
+                    torch_dtype=torch.float32,
+                )
+                self._hf_model.to(self._device)
+                logger.success(f"Loaded open non-gated fallback model: {fallback_name}")
+                return True
+            except Exception as fallback_err:
+                logger.warning(
+                    f"Fallback model failed: {fallback_err}. "
+                    f"Falling back to skeleton model for development."
+                )
+                return False
 
     def _ensure_model(self):
         """Ensure model is loaded (lazy initialization)."""

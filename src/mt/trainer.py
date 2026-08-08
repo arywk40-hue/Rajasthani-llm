@@ -63,7 +63,14 @@ class MTTrainer:
         label_smoothing: float = 0.1,
     ):
         self.model = model
-        self._device = device if device != "auto" else ("cuda" if torch.cuda.is_available() else "cpu")
+        if device != "auto" and device is not None:
+            self._device = device
+        elif torch.cuda.is_available():
+            self._device = "cuda"
+        elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            self._device = "mps"
+        else:
+            self._device = "cpu"
         self.learning_rate = learning_rate
         self.label_smoothing = label_smoothing
 
