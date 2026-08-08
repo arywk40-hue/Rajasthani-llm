@@ -147,7 +147,8 @@ class IndicTrans2MT(nn.Module):
     def _resolve_model_name(self) -> str:
         """Determine which HuggingFace model to load."""
         if self._model_name:
-            return self._model_name
+            # Check registry first (e.g. "indic-indic-dist-200M" → full HF ID)
+            return self.MODEL_REGISTRY.get(self._model_name, self._model_name)
         # Default: Indic-to-Indic for dialect work
         variant = self.config.get("hf_model_name", "indic-indic-1B")
         return self.MODEL_REGISTRY.get(variant, variant)

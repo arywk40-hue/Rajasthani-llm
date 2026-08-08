@@ -171,7 +171,7 @@ class MTTrainer:
             lr_scheduler_type="cosine",
             fp16=fp16 and self._device == "cuda",
             label_smoothing_factor=self.label_smoothing,
-            evaluation_strategy="steps" if eval_dataset else "no",
+            eval_strategy="steps" if eval_dataset else "no",
             eval_steps=500 if eval_dataset else None,
             save_steps=500,
             save_total_limit=3,

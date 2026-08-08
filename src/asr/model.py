@@ -340,7 +340,7 @@ class WhisperASR:
             "warmup_steps": warmup_steps,
             "fp16": fp16 and self._device == "cuda",
             "gradient_accumulation_steps": 4,
-            "evaluation_strategy": "steps",
+            "eval_strategy": "steps",
             "eval_steps": 500,
             "save_steps": 500,
             "save_total_limit": 3,
