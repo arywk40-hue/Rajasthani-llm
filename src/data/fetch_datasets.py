@@ -163,7 +163,6 @@ class DatasetFetcher:
                             config_name,
                             split=split,
                             streaming=True,
-                            trust_remote_code=True,
                         )
                         # Avoid audio decoding during metadata fetch
                         dataset = dataset.cast_column("audio", datasets.Audio(decode=False))
@@ -352,7 +351,6 @@ class DatasetFetcher:
                             config_name,
                             split="train",
                             streaming=True,
-                            trust_remote_code=True,
                         )
                     except Exception as e:
                         logger.error(f"Failed to load VAANI configuration {config_name}: {e}")
