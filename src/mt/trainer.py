@@ -209,6 +209,16 @@ class MTTrainer:
             ]
             return {"chrf": sum(chrf_scores) / max(len(chrf_scores), 1)}
 
+        # Data collator — prevents decoder_input_ids/decoder_inputs_embeds conflict
+        # by letting the model shift labels internally rather than the collator doing it
+        from transformers import DataCollatorForSeq2Seq
+        data_collator = DataCollatorForSeq2Seq(
+            tokenizer=tokenizer,
+            model=None,  # Don't pass model — avoids double decoder_input_ids generation
+            label_pad_token_id=-100,
+            pad_to_multiple_of=8 if fp16 else None,
+        )
+
         # Create trainer
         trainer = Seq2SeqTrainer(
             model=self.model._hf_model,
@@ -216,6 +226,7 @@ class MTTrainer:
             train_dataset=final_train_dataset,
             eval_dataset=eval_dataset,
             processing_class=tokenizer,
+            data_collator=data_collator,
             compute_metrics=compute_metrics if eval_dataset else None,
         )
 
