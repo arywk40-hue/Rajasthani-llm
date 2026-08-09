@@ -108,7 +108,7 @@ echo "Training samples: $TRAIN_COUNT"
 if [ "$TRAIN_COUNT" -gt "0" ]; then
     python3 scripts/train_mt.py \
         --train-data data/processed/mt_dialect_train.jsonl \
-        --model-name indic-indic-dist-200M \
+        --model-name indic-indic-dist-320M \
         --output-dir checkpoints/mt_indictrans2 \
         --epochs 3 \
         --batch-size 2 \

@@ -104,26 +104,19 @@ class MTDataset(Dataset):
 
             source_encoding = self.tokenizer(
                 src_text,
-                max_length=self.max_source_length,
-                padding="max_length",
                 truncation=True,
-                return_tensors="pt",
+                max_length=self.max_source_length,
             )
             # Tokenize targets
             target_encoding = self.tokenizer(
                 text_target=tgt_text,
-                max_length=self.max_target_length,
-                padding="max_length",
                 truncation=True,
-                return_tensors="pt",
+                max_length=self.max_target_length,
             )
 
-            item["input_ids"] = source_encoding["input_ids"].squeeze(0)
-            item["attention_mask"] = source_encoding["attention_mask"].squeeze(0)
-            labels = target_encoding["input_ids"].squeeze(0)
-            # Replace padding token id with -100 so it's ignored by loss
-            labels[labels == self.tokenizer.pad_token_id] = -100
-            item["labels"] = labels
+            item["input_ids"] = source_encoding["input_ids"]
+            item["attention_mask"] = source_encoding["attention_mask"]
+            item["labels"] = target_encoding["input_ids"]
 
         return item
 

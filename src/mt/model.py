@@ -87,7 +87,7 @@ class IndicTrans2MT(nn.Module):
         "indic-indic-1B": "ai4bharat/indictrans2-indic-indic-1B",
         "indic-en-1B": "ai4bharat/indictrans2-indic-en-1B",
         "en-indic-1B": "ai4bharat/indictrans2-en-indic-1B",
-        "indic-indic-dist-200M": "ai4bharat/indictrans2-indic-indic-dist-200M",
+        "indic-indic-dist-320M": "ai4bharat/indictrans2-indic-indic-dist-320M",
         "indic-en-dist-200M": "ai4bharat/indictrans2-indic-en-dist-200M",
         "en-indic-dist-200M": "ai4bharat/indictrans2-en-indic-dist-200M",
     }
@@ -188,27 +188,11 @@ class IndicTrans2MT(nn.Module):
             return True
 
         except Exception as e:
-            logger.warning(
-                f"Could not load primary model ({model_name}): {e}. "
-                f"Attempting fallback to open non-gated translation model (facebook/m2m100_418M)..."
-            )
-            try:
-                from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
-                fallback_name = "facebook/m2m100_418M"
-                self._tokenizer = AutoTokenizer.from_pretrained(fallback_name)
-                self._hf_model = AutoModelForSeq2SeqLM.from_pretrained(
-                    fallback_name,
-                    torch_dtype=torch.float32,
-                )
-                self._hf_model.to(self._device)
-                logger.success(f"Loaded open non-gated fallback model: {fallback_name}")
-                return True
-            except Exception as fallback_err:
-                logger.warning(
-                    f"Fallback model failed: {fallback_err}. "
-                    f"Falling back to skeleton model for development."
-                )
-                return False
+            logger.error(f"Could not load primary model ({model_name}): {e}")
+            raise RuntimeError(
+                f"IndicTrans2 could not be loaded ({model_name}). "
+                "Refusing to silently substitute another architecture."
+            ) from e
 
     def _ensure_model(self):
         """Ensure model is loaded (lazy initialization)."""

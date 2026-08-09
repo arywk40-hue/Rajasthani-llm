@@ -214,7 +214,7 @@ class MTTrainer:
         from transformers import DataCollatorForSeq2Seq
         data_collator = DataCollatorForSeq2Seq(
             tokenizer=tokenizer,
-            model=None,  # Don't pass model — avoids double decoder_input_ids generation
+            model=self.model._hf_model,
             label_pad_token_id=-100,
             pad_to_multiple_of=8 if fp16 else None,
         )
