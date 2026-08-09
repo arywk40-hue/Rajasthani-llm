@@ -1,155 +1,163 @@
 #!/bin/bash
-# GPU Training Launch Script for Rajasthani Dialect AI
-# Run: chmod +x scripts/train_gpu.sh && bash scripts/train_gpu.sh
-# NOTE: We do NOT use set -e because HuggingFace streaming has a known C++ cleanup
-# crash on connection abort that exits non-zero even when data was fetched correctly.
-
-echo "========================================================"
-echo " Rajasthani Dialect AI — GPU Training Pipeline"
-echo "========================================================"
-
-# Check GPU
-nvidia-smi
+# GPU Training Script — Optimized for available data (no slow audio fetch)
+# Uses: Karya 5000 records + VAANI 1000 records already on disk
 
 export PYTHONPATH=.
 
-# ──────────────────────────────────────────────────────────────
-# PHASE 0: Fetch Data
-# ──────────────────────────────────────────────────────────────
-echo "=== Phase 0: Fetching datasets from HuggingFace ==="
+echo "========================================================"
+echo " Rajasthani Dialect AI — Fast Training (skip audio fetch)"
+echo "========================================================"
 
-# Fetch Karya text metadata (fast, no audio)
-python scripts/fetch_data.py --only karya --max-karya 5000 || echo "[WARN] Karya fetch exited non-zero (likely stream cleanup bug) — checking data..."
-
-# Fetch VAANI metadata
-python scripts/fetch_data.py --only vaani --max-vaani 1000 || echo "[WARN] VAANI fetch exited non-zero — checking data..."
-
-# Fetch VAANI with audio for ASR (slower but needed for Whisper)
-python scripts/fetch_data.py --with-audio --max-vaani 300 --max-karya 1000 || echo "[WARN] VAANI audio fetch exited non-zero — checking data..."
-
-echo "=== Data fetch complete ==="
+nvidia-smi | head -20
 
 # ──────────────────────────────────────────────────────────────
-# PHASE 1: Generate MT Training Data from fetched text
+# PHASE 0: Check existing data
 # ──────────────────────────────────────────────────────────────
-echo "=== Phase 1: Preparing MT training data ==="
+echo ""
+echo "=== Phase 0: Checking existing data ==="
 
-python -c "
+python3 -c "
+from pathlib import Path
+import json
+
+def count_jsonl(p):
+    p = Path(p)
+    if not p.exists(): return 0
+    return sum(1 for l in open(p) if l.strip())
+
+karya = count_jsonl('data/raw/karya/karya_rajasthan.jsonl')
+vaani = count_jsonl('data/raw/vaani/vaani_rajasthan.jsonl')
+print(f'  Karya text records : {karya}')
+print(f'  VAANI text records : {vaani}')
+total = karya + vaani
+print(f'  Total available    : {total}')
+if total == 0:
+    print('ERROR: No data found. Run fetch_data.py first.')
+    exit(1)
+print('Data check passed.')
+"
+
+# ──────────────────────────────────────────────────────────────
+# PHASE 1: Prepare MT training data from existing text records
+# ──────────────────────────────────────────────────────────────
+echo ""
+echo "=== Phase 1: Preparing MT training data from existing records ==="
+
+python3 -c "
 import json
 from pathlib import Path
 
-# Read Karya data and create MT-format parallel pairs
-# Karya has Rajasthani text, we create source_text/target_text pairs
-karya_path = Path('data/raw/karya/karya_rajasthan.jsonl')
 mt_output = Path('data/processed/mt_dialect_train.jsonl')
 mt_output.parent.mkdir(parents=True, exist_ok=True)
 
 count = 0
-if karya_path.exists():
-    with open(karya_path, 'r') as f_in, open(mt_output, 'w') as f_out:
-        for line in f_in:
-            record = json.loads(line.strip())
-            text = record.get('text', '')
-            if not text or len(text) < 5:
-                continue
-            # For MT training: source=Rajasthani text, target=same (self-supervised)
-            # Real parallel data would be dialect->Hindi pairs
-            mt_record = {
+with open(mt_output, 'w') as f_out:
+    # Use Karya text
+    karya = Path('data/raw/karya/karya_rajasthan.jsonl')
+    if karya.exists():
+        for line in open(karya):
+            record = json.loads(line)
+            text = record.get('text', '').strip()
+            if len(text) < 5: continue
+            f_out.write(json.dumps({
                 'source_text': text,
-                'target_text': text,  # Self-supervised baseline
+                'target_text': text,
                 'source_lang': 'hin_Deva',
                 'target_lang': 'hin_Deva',
-            }
-            f_out.write(json.dumps(mt_record, ensure_ascii=False) + '\n')
+            }, ensure_ascii=False) + '\n')
             count += 1
-print(f'Created {count} MT training pairs in {mt_output}')
 
-# Also create ASR-format data from VAANI
-vaani_path = Path('data/raw/vaani/vaani_rajasthan.jsonl')
-asr_train = Path('data/processed/asr_train.jsonl')
-asr_val = Path('data/processed/asr_val.jsonl')
+    # Also use VAANI text
+    vaani = Path('data/raw/vaani/vaani_rajasthan.jsonl')
+    if vaani.exists():
+        for line in open(vaani):
+            record = json.loads(line)
+            text = record.get('text', '').strip()
+            if len(text) < 5: continue
+            f_out.write(json.dumps({
+                'source_text': text,
+                'target_text': text,
+                'source_lang': 'hin_Deva',
+                'target_lang': 'hin_Deva',
+            }, ensure_ascii=False) + '\n')
+            count += 1
 
-asr_count = 0
-if vaani_path.exists():
-    records = []
-    with open(vaani_path, 'r') as f:
-        for line in f:
-            record = json.loads(line.strip())
-            if record.get('text') and record.get('audio_path'):
-                records.append(record)
-    
-    # 90/10 train/val split
-    split_idx = int(len(records) * 0.9)
-    with open(asr_train, 'w') as f:
-        for r in records[:split_idx]:
-            f.write(json.dumps(r, ensure_ascii=False) + '\n')
-    with open(asr_val, 'w') as f:
-        for r in records[split_idx:]:
-            f.write(json.dumps(r, ensure_ascii=False) + '\n')
-    asr_count = len(records)
-print(f'Created {asr_count} ASR records ({asr_train}, {asr_val})')
+print(f'Created {count} MT training pairs -> {mt_output}')
 "
 
 # ──────────────────────────────────────────────────────────────
-# PHASE 2: Zero-shot MT Benchmark (real IndicTrans2 inference)
+# PHASE 2: MT Benchmark (zero-shot — no data file needed)
 # ──────────────────────────────────────────────────────────────
-echo "=== Phase 2: Running zero-shot MT benchmark ==="
-python experiments/mt/benchmark.py
-
-echo "=== MT benchmark results ==="
-cat results/mt/benchmark_results.csv
+echo ""
+echo "=== Phase 2: Zero-shot MT benchmark ==="
+python3 experiments/mt/benchmark.py || echo "[WARN] MT benchmark failed, continuing..."
 
 # ──────────────────────────────────────────────────────────────
-# PHASE 3: MT Fine-tuning (Low VRAM: ~6 GB)
+# PHASE 3: MT Fine-tuning
 # ──────────────────────────────────────────────────────────────
-echo "=== Phase 3: Fine-tuning MT model ==="
-python scripts/train_mt.py \
-    --train-data data/processed/mt_dialect_train.jsonl \
-    --model-name indic-indic-dist-200M \
-    --output-dir checkpoints/mt_indictrans2 \
-    --epochs 3 \
-    --batch-size 2 \
-    --grad-accum 8 \
-    --lr 3e-5 \
-    --device cuda
+echo ""
+echo "=== Phase 3: MT Fine-tuning (IndicTrans2) ==="
 
-# ──────────────────────────────────────────────────────────────
-# PHASE 4: ASR Benchmark & Fine-tuning
-# ──────────────────────────────────────────────────────────────
-echo "=== Phase 4: ASR zero-shot benchmark ==="
+TRAIN_COUNT=$(python3 -c "
+from pathlib import Path
+p = Path('data/processed/mt_dialect_train.jsonl')
+print(sum(1 for l in open(p) if l.strip()) if p.exists() else 0)
+")
+echo "Training samples: $TRAIN_COUNT"
 
-# Zero-shot benchmark (if audio data available)
-if [ -f data/processed/asr_val.jsonl ]; then
-    python scripts/run_benchmark.py \
-        --model indicwhisper-hindi-small \
-        --test-data data/processed/asr_val.jsonl \
-        --max-samples 100
+if [ "$TRAIN_COUNT" -gt "0" ]; then
+    python3 scripts/train_mt.py \
+        --train-data data/processed/mt_dialect_train.jsonl \
+        --model-name indic-indic-dist-200M \
+        --output-dir checkpoints/mt_indictrans2 \
+        --epochs 3 \
+        --batch-size 2 \
+        --grad-accum 8 \
+        --lr 3e-5 \
+        --device cuda || echo "[WARN] MT training exited, check logs"
+else
+    echo "[SKIP] No MT training data found"
 fi
 
-# Fine-tune ASR (if training data available)
-if [ -f data/processed/asr_train.jsonl ]; then
-    echo "=== Fine-tuning ASR (Whisper) ==="
-    python scripts/train_asr.py \
+# ──────────────────────────────────────────────────────────────
+# PHASE 4: ASR Zero-shot Benchmark
+# ──────────────────────────────────────────────────────────────
+echo ""
+echo "=== Phase 4: ASR Zero-shot Benchmark ==="
+python3 experiments/asr/benchmark.py || echo "[WARN] ASR benchmark failed, continuing..."
+
+# ──────────────────────────────────────────────────────────────
+# PHASE 5: ASR Fine-tuning (only if audio data available)
+# ──────────────────────────────────────────────────────────────
+echo ""
+echo "=== Phase 5: Checking for ASR audio data ==="
+
+AUDIO_COUNT=$(python3 -c "
+from pathlib import Path
+import json
+p = Path('data/raw/vaani/vaani_audio_metadata.jsonl')
+if not p.exists(): print(0)
+else:
+    count = sum(1 for l in open(p) if json.loads(l).get('audio_path') and Path(json.loads(l)['audio_path']).exists())
+    print(count)
+")
+
+if [ "$AUDIO_COUNT" -gt "50" ]; then
+    echo "Found $AUDIO_COUNT audio files — running ASR fine-tuning"
+    python3 scripts/train_asr.py \
         --train-data data/processed/asr_train.jsonl \
         --val-data data/processed/asr_val.jsonl \
-        --model-name indicwhisper-hindi-small \
-        --output-dir checkpoints/asr_whisper \
         --epochs 5 \
         --batch-size 2 \
-        --lr 1e-5
+        --lr 1e-5 || echo "[WARN] ASR training exited"
+else
+    echo "[SKIP] Not enough audio files ($AUDIO_COUNT) for ASR fine-tuning — skipping"
+    echo "       Run: python scripts/fetch_data.py --with-audio separately when network is stable"
 fi
 
-# ──────────────────────────────────────────────────────────────
-# PHASE 5: Run all benchmarks (updates results/ CSVs)
-# ──────────────────────────────────────────────────────────────
-echo "=== Phase 5: Running all benchmarks ==="
-python experiments/mt/benchmark.py || true
-python experiments/asr/benchmark.py || true
-python experiments/tts/benchmark.py || true
-python experiments/end_to_end/benchmark.py || true
-
+echo ""
 echo "========================================================"
-echo " TRAINING COMPLETE"
-echo " Checkpoints: checkpoints/"
+echo " PIPELINE COMPLETE"
 echo " Results: results/"
+echo " Checkpoints: checkpoints/"
 echo "========================================================"
