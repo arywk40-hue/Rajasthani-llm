@@ -180,6 +180,8 @@ class WhisperASR:
         Returns:
             List of transcribed text strings
         """
+        if not audio_paths:
+            return []
         self._ensure_loaded()
 
         try:

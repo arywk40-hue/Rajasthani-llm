@@ -99,7 +99,7 @@ async def translate_text(
     """
     logger.info(f"Translation request: {payload.src_lang} → {payload.tgt_lang} ({len(payload.text)} chars)")
 
-    model = request.app.state.mt_model
+    model = getattr(request.app.state, "mt_model", None)
     if model is None:
         raise HTTPException(status_code=503, detail="MT model not loaded")
 
@@ -112,6 +112,9 @@ async def translate_text(
         translated = translations[0] if translations else ""
     except Exception as e:
         logger.error(f"Translation failed: {e}")
+        err_msg = str(e).lower()
+        if "could not be loaded" in err_msg or "gated repo" in err_msg or "not available" in err_msg or "subsystem failure" in err_msg:
+            raise HTTPException(status_code=503, detail="MT model not loaded or available")
         raise HTTPException(status_code=500, detail="Translation generation failed")
 
     return TranslateResponse(
@@ -132,7 +135,7 @@ async def transcribe_audio(
     """
     logger.info(f"ASR request: dialect={payload.dialect}, audio_len={len(payload.audio_base64)}")
 
-    model = request.app.state.asr_model
+    model = getattr(request.app.state, "asr_model", None)
     if model is None:
         raise HTTPException(status_code=503, detail="ASR model not loaded")
 
@@ -168,7 +171,7 @@ async def synthesize_speech(
     """
     logger.info(f"TTS request: dialect={payload.dialect}, text_len={len(payload.text)}")
 
-    model = request.app.state.tts_model
+    model = getattr(request.app.state, "tts_model", None)
     if model is None:
         raise HTTPException(status_code=503, detail="TTS model not loaded")
 

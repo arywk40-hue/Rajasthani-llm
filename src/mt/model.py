@@ -50,9 +50,10 @@ FLORES_LANG_CODES = {
 
 def _get_flores_code(lang: str) -> str:
     """Map a language name or code to FLORES-200 format."""
-    lang_lower = lang.lower().strip()
-    if "_" in lang_lower and len(lang_lower) == 8:
-        return lang_lower  # Already in FLORES format
+    lang_clean = lang.strip()
+    if "_" in lang_clean and len(lang_clean) == 8:
+        return lang_clean  # Already in FLORES format
+    lang_lower = lang_clean.lower()
     return FLORES_LANG_CODES.get(lang_lower, "hin_Deva")
 
 
@@ -203,7 +204,7 @@ class IndicTrans2MT(nn.Module):
 
     def _ensure_model(self):
         """Ensure model is loaded (lazy initialization)."""
-        if self._hf_model is not None:
+        if self._hf_model is not None or self._skeleton_model is not None:
             return
 
         if not self._load_hf_model():
