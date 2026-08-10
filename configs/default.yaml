@@ -1,0 +1,29 @@
+# Default configuration for Rajasthani Dialect AI S2ST system
+
+pipeline:
+  device: "auto"      # auto, cpu, cuda, mps
+
+asr:
+  model_name: "whisper-tiny"  # whisper-tiny, vasista22/whisper-hindi-small, indicwhisper-hindi-large-v2
+  language: "hi"
+  task: "transcribe"
+  batch_size: 8
+  sample_rate: 16000
+
+mt:
+  model_name: "indic-indic-dist-320M"  # indic-indic-dist-320M, indic-en-dist-200M
+  generation:
+    num_beams: 5
+    max_length: 256
+    length_penalty: 1.0
+
+tts:
+  model_name: "facebook/mms-tts-hin"  # facebook/mms-tts-hin
+  sample_rate: 16000
+
+paths:
+  raw_data_dir: "data/raw/"
+  processed_data_dir: "data/processed/"
+  manifest_path: "data/raw/vaani/vaani_audio_metadata.jsonl"
+  results_dir: "results/"
+  checkpoints_dir: "checkpoints/"

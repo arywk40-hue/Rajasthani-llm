@@ -115,8 +115,6 @@ class IndicTrans2MT(nn.Module):
             self._device = device
         elif torch.cuda.is_available():
             self._device = "cuda"
-        elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-            self._device = "mps"
         else:
             self._device = "cpu"
 
@@ -166,13 +164,17 @@ class IndicTrans2MT(nn.Module):
             model_name = self._resolve_model_name()
             logger.info(f"Loading IndicTrans2 from HuggingFace: {model_name}")
 
+            import os
+            hf_token = os.environ.get("HF_TOKEN")
+
             self._tokenizer = AutoTokenizer.from_pretrained(
-                model_name, trust_remote_code=True
+                model_name, trust_remote_code=True, token=hf_token
             )
             self._hf_model = AutoModelForSeq2SeqLM.from_pretrained(
                 model_name,
                 trust_remote_code=True,
                 torch_dtype=torch.float16 if self._device == "cuda" else torch.float32,
+                token=hf_token,
             )
             self._hf_model.to(self._device)
 

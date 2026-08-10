@@ -71,12 +71,13 @@ def main() -> int:
     parser.add_argument("--model", type=str, default=None, help="Key from MODEL_REGISTRY or an HF id")
     args = parser.parse_args()
 
-    from src.mt.model import IndicTrans2MT, _get_flores_code
+    from src.mt.pipeline import TranslationPipeline
+    from src.mt.model import _get_flores_code
 
     try:
-        mt = IndicTrans2MT(model_name=args.model) if args.model else IndicTrans2MT()
+        pipeline = TranslationPipeline(model_name=args.model)
     except Exception as e:
-        logger.error(f"Could not construct IndicTrans2MT: {e}. No CSV written.")
+        logger.error(f"Could not construct TranslationPipeline: {e}. No CSV written.")
         return 1
 
     evaluator = Evaluator()
@@ -94,14 +95,16 @@ def main() -> int:
             ref_texts = [s[tgt_idx] for s in samples]
 
             try:
-                hypotheses = mt.translate(src_texts, src_lang=dialect, tgt_lang=tgt_lang)
+                # Use TranslationPipeline for dialect-aware cognate normalization
+                hypotheses = [
+                    pipeline.translate_dialect(t, dialect=dialect, target_lang=tgt_lang)["translated_text"]
+                    for t in src_texts
+                ]
             except Exception as e:
                 logger.error(f"Translation failed for {dialect}->{tgt_lang}: {e}")
                 return 1
 
-            # The skeleton fallback returns "[SKELETON] Translation of: ..." rather than
-            # raising, so an unloaded model would otherwise be scored and written out as
-            # though it were measured. Refuse instead.
+            # Check if skeleton mode was active
             if any(SKELETON_MARKER in h for h in hypotheses):
                 logger.error(
                     "IndicTrans2 did not load — translate() returned skeleton placeholders. "

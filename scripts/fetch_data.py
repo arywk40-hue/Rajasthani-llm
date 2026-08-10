@@ -25,15 +25,26 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Fetch datasets for Rajasthani Dialect AI")
-    parser.add_argument("--output-dir", type=str, default="data/raw")
-    parser.add_argument("--dialects", nargs="+", default=ALL_DIALECTS)
-    parser.add_argument("--max-vaani", type=int, default=5000, help="Max samples per dialect from VAANI")
+    parser.add_argument("--output-dir", "--output", type=str, dest="output_dir", default="data/raw", help="Path to output directory")
+    parser.add_argument("--dialects", "--dialect", nargs="+", dest="dialects", default=ALL_DIALECTS, help="List of dialects to fetch")
+    parser.add_argument("--max-vaani", "--limit", type=int, dest="max_vaani", default=5000, help="Max samples per dialect from VAANI")
     parser.add_argument("--max-karya", type=int, default=10000, help="Max samples from Karya")
-    parser.add_argument("--with-audio", action="store_true", help="Also download audio files")
+    parser.add_argument("--with-audio", action="store_true", default=False, help="Download audio files")
+    parser.add_argument("--metadata-only", action="store_false", dest="with_audio", help="Fetch metadata only (no audio)")
     parser.add_argument("--only", choices=["vaani", "karya", "all"], default="all")
+    parser.add_argument("--demo", action="store_true", help="Force generating demo/synthetic dataset")
     args = parser.parse_args()
 
     fetcher = DatasetFetcher(output_dir=args.output_dir)
+
+    if args.demo:
+        print("📥 Generating demo/synthetic dataset...")
+        fetcher.generate_demo_data()
+        print("\n📊 Download Report:")
+        for name, count in fetcher.report().items():
+            print(f"  {name}: {count} records")
+        print("✅ Done!")
+        return
 
     if args.only in ("vaani", "all"):
         if args.with_audio:
@@ -41,6 +52,7 @@ def main():
             fetcher.fetch_vaani_with_audio(
                 dialects=args.dialects,
                 max_samples_per_dialect=args.max_vaani,
+                demo_fallback=True,
             )
         else:
             print(f"📥 Fetching VAANI metadata for: {args.dialects}")

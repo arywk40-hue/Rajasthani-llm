@@ -183,9 +183,10 @@ class WhisperASR:
         self._ensure_loaded()
 
         try:
-            import librosa
+            import soundfile as sf
+            import numpy as np
         except ImportError:
-            logger.error("librosa not installed. Install with: pip install librosa")
+            logger.error("soundfile and numpy are required. Install with: pip install soundfile numpy")
             raise
 
         transcripts = []
@@ -199,7 +200,17 @@ class WhisperASR:
 
             for path in batch_paths:
                 try:
-                    audio, sr = librosa.load(str(path), sr=16000)
+                    audio, sr = sf.read(str(path))
+                    if len(audio.shape) > 1:
+                        audio = audio.mean(axis=1)
+                    if sr != 16000:
+                        # numpy resampling
+                        num_samples = int(len(audio) * 16000 / sr)
+                        audio = np.interp(
+                            np.linspace(0, len(audio), num_samples, endpoint=False),
+                            np.arange(len(audio)),
+                            audio
+                        )
                     batch_audio.append(audio)
                 except Exception as e:
                     logger.warning(f"Could not load {path}: {e}")
@@ -252,13 +263,14 @@ class WhisperASR:
         self._ensure_loaded()
 
         if sampling_rate != 16000:
-            try:
-                import librosa
-                audio_array = librosa.resample(
-                    audio_array, orig_sr=sampling_rate, target_sr=16000
-                )
-            except ImportError:
-                logger.warning("librosa not available for resampling")
+            import numpy as np
+            # numpy resampling
+            num_samples = int(len(audio_array) * 16000 / sampling_rate)
+            audio_array = np.interp(
+                np.linspace(0, len(audio_array), num_samples, endpoint=False),
+                np.arange(len(audio_array)),
+                audio_array
+            )
 
         input_features = self._processor(
             audio_array,

@@ -7,13 +7,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
+# Create non-root user and group
+RUN groupadd -g 10001 appuser && \
+    useradd -u 10001 -g appuser -d /app -s /bin/bash appuser
+
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Copy application code and set ownership
+COPY --chown=appuser:appuser . .
 RUN pip install -e .
+
+# Make app directory writable for Hugging Face caching
+RUN mkdir -p /app/.cache && chown -R appuser:appuser /app
+
+# Set non-root execution context
+USER appuser
 
 # Expose port
 EXPOSE 8000
