@@ -67,10 +67,74 @@ RAJASTHAN_DISTRICTS = set(DISTRICT_DIALECT_MAP.keys())
 
 ALL_DIALECTS = ["marwari", "mewari", "dhundhari", "hadoti", "mewati", "bagri"]
 
+# ─── HuggingFace repo ids ─────────────────────────────────────────────────────
+# VAANI_REPO is the full corpus (~31,000 hrs, audio + metadata). Only ~2,043 hrs carry
+# transcripts; those live in VAANI_TRANSCRIPTION_REPO. ASR fine-tuning needs transcripts,
+# so prefer the transcription part when a config exists there for the district.
+VAANI_REPO = "ARTPARK-IISc/Vaani"
+VAANI_TRANSCRIPTION_REPO = "ARTPARK-IISc/Vaani-transcription-part"
+KARYA_REPO = "severo/speech-rj-hi"
+BPCC_REPO = "ai4bharat/BPCC"
+
 
 def get_dialect_for_district(district: str) -> str:
     """Map a district name to its primary dialect."""
     return DISTRICT_DIALECT_MAP.get(district.lower().strip(), "unknown")
+
+
+def vaani_configs_for_dialects(
+    dialects: list[str],
+    repo_id: str = VAANI_REPO,
+) -> list[str]:
+    """
+    Resolve VAANI config names for the requested dialects.
+
+    Asks the Hub for the repo's real config list and keeps the ones whose district maps to
+    a requested dialect. Falls back to constructing `Rajasthan_<District>` candidates if the
+    listing is unavailable (offline, or `datasets` not installed).
+
+    Earlier revisions hardcoded configs for marwari and dhundhari only, so a request for the
+    other four dialects loaded nothing and still logged success.
+    """
+    wanted_districts = {
+        district for district, dialect in DISTRICT_DIALECT_MAP.items()
+        if dialect in dialects
+    }
+
+    def _district_of(config: str) -> str:
+        # Configs are "<State>_<District>"; a district may itself contain underscores.
+        _, _, tail = config.partition("_")
+        return tail.replace("_", " ").lower().strip()
+
+    try:
+        from datasets import get_dataset_config_names
+
+        available = get_dataset_config_names(repo_id)
+        matched = sorted(c for c in available if _district_of(c) in wanted_districts)
+
+        if matched:
+            logger.info(
+                f"Resolved {len(matched)} VAANI configs from {len(available)} published, "
+                f"for dialects {dialects}"
+            )
+            missing = wanted_districts - {_district_of(c) for c in matched}
+            if missing:
+                logger.warning(
+                    f"VAANI publishes no config for these districts: {sorted(missing)}. "
+                    "Dialects resting solely on them cannot be fetched from VAANI."
+                )
+            return matched
+
+        logger.warning(
+            f"None of the {len(available)} published configs matched the target districts. "
+            "Falling back to constructed names — verify these against the dataset card."
+        )
+    except Exception as e:
+        logger.warning(f"Could not list configs for {repo_id} ({e}). Using constructed names.")
+
+    return sorted(
+        f"Rajasthan_{'_'.join(p.capitalize() for p in d.split())}" for d in wanted_districts
+    )
 
 
 class DatasetFetcher:
@@ -142,16 +206,9 @@ class DatasetFetcher:
         dialect_counts: dict[str, int] = {d: 0 for d in dialects}
         total = 0
 
-        # Define geocentric configurations for Rajasthan districts
-        dialect_to_configs = {
-            "marwari": ["Rajasthan_Barmer", "Rajasthan_Bikaner", "Rajasthan_Churu", "Rajasthan_Jaisalmer", "Rajasthan_Nagaur"],
-            "dhundhari": ["Rajasthan_Jaipur"]
-        }
-
-        configs_to_load = []
-        for dialect in dialects:
-            if dialect in dialect_to_configs:
-                configs_to_load.extend(dialect_to_configs[dialect])
+        configs_to_load = vaani_configs_for_dialects(dialects)
+        logger.info(f"Candidate VAANI configs ({len(configs_to_load)}): {configs_to_load}")
+        loaded_configs, skipped_configs = [], []
 
         try:
             with open(output_path, "w", encoding="utf-8") as f:
@@ -159,15 +216,17 @@ class DatasetFetcher:
                     logger.info(f"Streaming VAANI configuration: {config_name}")
                     try:
                         dataset = load_dataset(
-                            "ARTPARK-IISc/Vaani",
+                            VAANI_REPO,
                             config_name,
                             split=split,
                             streaming=True,
                         )
                         # Avoid audio decoding during metadata fetch
                         dataset = dataset.cast_column("audio", datasets.Audio(decode=False))
+                        loaded_configs.append(config_name)
                     except Exception as e:
-                        logger.error(f"Failed to load VAANI configuration {config_name}: {e}")
+                        logger.warning(f"VAANI config {config_name} unavailable, skipping: {e}")
+                        skipped_configs.append(config_name)
                         continue
 
                     for sample in dataset:
@@ -217,10 +276,26 @@ class DatasetFetcher:
         except Exception as e:
             logger.error(f"Error fetching VAANI: {e}")
 
-        logger.success(
-            f"VAANI fetch complete: {total} total samples | "
-            f"Per-dialect: {dialect_counts} | Output: {output_path}"
-        )
+        if skipped_configs:
+            logger.warning(
+                f"{len(skipped_configs)} of {len(configs_to_load)} configs did not load: "
+                f"{skipped_configs}"
+            )
+
+        if total == 0:
+            logger.error(
+                "VAANI fetch produced 0 samples. Nothing was written to "
+                f"{output_path}. Do not treat this as a completed fetch — check the config "
+                "names above against the dataset card and confirm HF access."
+            )
+        else:
+            logger.success(
+                f"VAANI fetch: {total} total samples across {len(loaded_configs)} configs | "
+                f"Per-dialect: {dialect_counts} | Output: {output_path}"
+            )
+            empty = [d for d, c in dialect_counts.items() if c == 0]
+            if empty:
+                logger.warning(f"No samples collected for: {empty}")
         return output_path
 
     # ─── Karya (Speech-rj-hi) ─────────────────────────────────────────────────
@@ -234,7 +309,14 @@ class DatasetFetcher:
         Fetch the Speech-rj-hi (Karya) dataset — read speech from Rajasthan.
 
         426,873 clips from 98 participants (58 male, 40 female) from Soda, Rajasthan.
-        Clean, clearly articulated read speech — ideal for TTS training baseline.
+
+        Two caveats that bound what this data can be used for:
+          - This method writes text and metadata only. `audio` is cast with decode=False,
+            so `audio_path` is a reference inside the HF cache, not a local WAV. Audio for
+            fine-tuning still has to be materialised separately.
+          - Karya does not partition by dialect; every row is labelled `rajasthani`. The
+            text is standard Hindi register, so it is Rajasthani-accented Hindi *speech* —
+            useful for ASR acoustics, not a source of dialect text for MT.
         """
         try:
             from datasets import load_dataset
@@ -251,7 +333,7 @@ class DatasetFetcher:
         count = 0
         try:
             dataset = load_dataset(
-                "severo/speech-rj-hi",
+                KARYA_REPO,
                 split=split,
                 streaming=True,
             )
@@ -330,30 +412,30 @@ class DatasetFetcher:
         dialect_counts: dict[str, int] = {d: 0 for d in dialects}
         total = 0
 
-        # Define geocentric configurations for Rajasthan districts
-        dialect_to_configs = {
-            "marwari": ["Rajasthan_Barmer", "Rajasthan_Bikaner", "Rajasthan_Churu", "Rajasthan_Jaisalmer", "Rajasthan_Nagaur"],
-            "dhundhari": ["Rajasthan_Jaipur"]
-        }
+        configs_to_load = vaani_configs_for_dialects(dialects)
+        logger.info(f"Candidate VAANI configs ({len(configs_to_load)}): {configs_to_load}")
+        loaded_configs, skipped_configs = [], []
 
-        configs_to_load = []
-        for dialect in dialects:
-            if dialect in dialect_to_configs:
-                configs_to_load.extend(dialect_to_configs[dialect])
+        # Write to a sibling temp file and promote it only once samples exist. Opening
+        # metadata_path directly would truncate a good manifest from a previous run the
+        # moment this fetch is attempted, so a failed retry would destroy working data.
+        staging_path = metadata_path.with_name(metadata_path.name + ".partial")
 
         try:
-            with open(metadata_path, "w", encoding="utf-8") as f:
+            with open(staging_path, "w", encoding="utf-8") as f:
                 for config_name in configs_to_load:
                     logger.info(f"Streaming VAANI with audio configuration: {config_name}")
                     try:
                         dataset = load_dataset(
-                            "ARTPARK-IISc/Vaani",
+                            VAANI_REPO,
                             config_name,
                             split="train",
                             streaming=True,
                         )
+                        loaded_configs.append(config_name)
                     except Exception as e:
-                        logger.error(f"Failed to load VAANI configuration {config_name}: {e}")
+                        logger.warning(f"VAANI config {config_name} unavailable, skipping: {e}")
+                        skipped_configs.append(config_name)
                         continue
 
                     for sample in dataset:
@@ -408,10 +490,32 @@ class DatasetFetcher:
         except Exception as e:
             logger.error(f"Error fetching VAANI audio: {e}")
 
-        logger.success(
-            f"VAANI audio fetch complete: {total} samples | "
-            f"Per-dialect: {dialect_counts}"
-        )
+        if skipped_configs:
+            logger.warning(
+                f"{len(skipped_configs)} of {len(configs_to_load)} configs did not load: "
+                f"{skipped_configs}"
+            )
+
+        empty = [d for d, c in dialect_counts.items() if c == 0]
+        if total == 0:
+            staging_path.unlink(missing_ok=True)
+            logger.error(
+                "VAANI audio fetch produced 0 samples. Nothing was written to "
+                f"{metadata_path}. Do not treat this as a completed fetch — check the "
+                "config names above against the dataset card, and confirm `datasets` and "
+                "`soundfile` are installed with HF access configured."
+            )
+        else:
+            staging_path.replace(metadata_path)
+            logger.success(
+                f"VAANI audio fetch: {total} samples across {len(loaded_configs)} configs | "
+                f"Per-dialect: {dialect_counts}"
+            )
+            if empty:
+                logger.warning(
+                    f"No audio collected for: {empty}. These dialects remain unrepresented; "
+                    "any per-dialect ASR result for them would be vacuous."
+                )
         return metadata_path
 
     # ─── BPCC Parallel Corpus (for MT) ──────────────────────────────────────────
@@ -453,7 +557,7 @@ class DatasetFetcher:
             # BPCC is available as separate configs per language pair
             config_name = f"{src}-{tgt}"
             dataset = load_dataset(
-                "ai4bharat/BPCC",
+                BPCC_REPO,
                 config_name,
                 split="train",
                 streaming=True,

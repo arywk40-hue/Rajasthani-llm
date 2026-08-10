@@ -1,7 +1,0 @@
-model,dialect,wer,cer,rtf
-IndicWhisper-Large-v2,marwari,0.0,0.0,0.15
-IndicWhisper-Large-v2,mewari,0.0,0.0,0.15
-IndicWhisper-Large-v2,dhundhari,0.0,0.0,0.15
-IndicWhisper-Large-v2,hadoti,0.0,0.0,0.15
-IndicWhisper-Large-v2,mewati,0.0,0.0,0.15
-IndicWhisper-Large-v2,bagri,0.0,0.0,0.15

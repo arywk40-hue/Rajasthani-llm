@@ -136,6 +136,11 @@ class WhisperASR:
             raise
 
     @property
+    def model_id(self) -> str:
+        """The resolved HuggingFace model id, for reporting in benchmark output."""
+        return self._hf_model_id
+
+    @property
     def model(self):
         """Access the underlying Whisper model (for HF Trainer integration)."""
         self._ensure_loaded()

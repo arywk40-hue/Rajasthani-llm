@@ -153,6 +153,11 @@ class IndicTrans2MT(nn.Module):
         variant = self.config.get("hf_model_name", "indic-indic-1B")
         return self.MODEL_REGISTRY.get(variant, variant)
 
+    @property
+    def model_id(self) -> str:
+        """The resolved HuggingFace model id, for reporting in benchmark output."""
+        return self._resolve_model_name()
+
     def _load_hf_model(self) -> bool:
         """Attempt to load the HuggingFace model. Returns True on success."""
         try:
