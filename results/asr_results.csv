@@ -1,0 +1,7 @@
+model,dialect,samples,empty_hypotheses,wer,cer,rtf,audio_seconds,wall_seconds,measured
+openai/whisper-tiny,marwari,2,0,1.0,1.0,21.5222,2.0,43.0,true
+openai/whisper-tiny,mewari,2,0,1.0,1.0,7.9888,2.0,16.0,true
+openai/whisper-tiny,dhundhari,2,0,1.0,1.0,6.4099,2.0,12.8,true
+openai/whisper-tiny,hadoti,2,0,1.0,1.0,8.1206,2.0,16.2,true
+openai/whisper-tiny,mewati,2,0,1.0,1.0,5.5819,2.0,11.2,true
+openai/whisper-tiny,bagri,2,0,1.0,1.0,7.7998,2.0,15.6,true

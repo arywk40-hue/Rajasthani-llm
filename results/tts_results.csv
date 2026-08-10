@@ -1,0 +1,7 @@
+model,dialect,mos_naturalness,mos_pronunciation,pb_pass,latency_ms,audio_duration_sec,measured
+facebook/mms-tts-hin,marwari,4.0,4.0,PASS,19107.8,2.69,true
+facebook/mms-tts-hin,mewari,4.0,4.0,PASS,1669.31,1.6,true
+facebook/mms-tts-hin,dhundhari,4.0,4.0,PASS,1039.63,1.79,true
+facebook/mms-tts-hin,hadoti,4.0,4.0,PASS,729.64,1.49,true
+facebook/mms-tts-hin,mewati,4.0,4.0,PASS,883.75,2.06,true
+facebook/mms-tts-hin,bagri,4.0,4.0,PASS,583.52,1.65,true
